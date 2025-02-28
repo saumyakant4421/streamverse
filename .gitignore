@@ -1,0 +1,9 @@
+node_modules/
+package-lock.json
+.env
+.env.local
+.env.production
+.env.development
+
+backend/user-service/firebaseServiceAccountKey.json
+

@@ -9,9 +9,9 @@ const otpStore = new Map(); // Temporary OTP storage
 
 // ✅ Generate Unique Username
 const generateUsername = (email) => {
-  const base = email.split("@")[0]; // Get part before @
-  const randomNum = Math.floor(1000 + Math.random() * 9000); // Random 4-digit number
-  return `${base}_${randomNum}`;
+    const base = email.split("@")[0].substring(0, 6); // Get first 6 letters before @
+    const randomNum = Math.floor(1000 + Math.random() * 9000); // Random 4-digit number
+    return `${base}_${randomNum}`;
 };
 
 // ✅ Send OTP

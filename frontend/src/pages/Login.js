@@ -36,7 +36,7 @@ const Login = () => {
 
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       console.error("Login Error:", error.message);
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
@@ -55,7 +55,7 @@ const Login = () => {
     setLoading(true);
     try {
       await signInWithGoogle();
-      navigate("/dashboard");
+      navigate("/");
     } catch (error) {
       console.error("Google Login Error:", error.message);
       setErrorMsg("Google sign-in failed. Try again.");

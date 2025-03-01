@@ -129,16 +129,16 @@ const Signup = () => {
         name: name.trim()
       });
       
-      setSuccessMsg("Registration complete! Redirecting to dashboard...");
+      setSuccessMsg("Registration complete! Redirecting to streamverse...");
       
       // Automatically sign in after registration
       try {
         // Sign in with Firebase using email and password
         await signInWithEmailAndPassword(auth, email, password);
         
-        // Redirect to dashboard
+        // Redirect to 
         setTimeout(() => {
-          navigate("/dashboard");
+          navigate("/");
         }, 2000);
       } catch (signInError) {
         console.error("Error signing in after registration:", signInError);
@@ -158,7 +158,7 @@ const Signup = () => {
     try {
       const user = await signInWithGoogle();
       if (user) {
-        navigate("/dashboard");
+        navigate("/");
       }
     } catch (error) {
       setErrorMsg("Google signup failed. Please try again.");

@@ -1,17 +1,34 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-
+import { FaUser, FaSearch, FaHeart, FaTheaterMasks, FaGhost } from "react-icons/fa";
+import { MdMovie, MdOutlineBeachAccess, MdOutlineLocalMovies, MdFilterList, MdSort } from "react-icons/md";
+import { GiPunchingBag, GiCrimeSceneTape, GiDramaMasks, GiMagicPortal } from "react-icons/gi";
 import "../styles/homepage.scss";
+import logo from "../assets/logo.png";
 
 const API_BASE_URL = "http://localhost:4001/api/movies"; // Backend API
 
 const genres = [
-  "Action", "Adventure", "Animation", "Comedy",
-  "Crime", "Documentary", "Drama", "Fantasy",
+  "Action", "Adventure", "Animation", "Comedy", 
+  "Crime", "Documentary", "Drama", "Fantasy", 
   "Horror", "SciFi"
 ];
+
+// Map genre to icon
+const genreIcons = {
+  "Action": <GiPunchingBag />,
+  "Adventure": <MdOutlineBeachAccess />,
+  "Animation": <MdMovie />,
+  "Comedy": <FaTheaterMasks />,
+  "Crime": <GiCrimeSceneTape />,
+  "Documentary": <MdOutlineLocalMovies />,
+  "Drama": <GiDramaMasks />,
+  "Fantasy": <GiMagicPortal />,
+  "Horror": <FaGhost />,
+  "SciFi": <MdMovie />
+};
 
 const franchises = [
   "Marvel", "DC", "HarryPotter", "StarWars",
@@ -28,6 +45,8 @@ const Homepage = () => {
   const [genreMovies, setGenreMovies] = useState({});
   const [franchiseMovies, setFranchiseMovies] = useState({});
   const [watchlist, setWatchlist] = useState([]);
+  const [selectedGenre, setSelectedGenre] = useState("Action");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (!user) {
@@ -37,7 +56,6 @@ const Homepage = () => {
 
     fetchTrendingMovies();
     fetchGenreMovies();
-    fetchFranchiseMovies();
     fetchWatchlist();
   }, [user]);
 
@@ -65,20 +83,6 @@ const Homepage = () => {
     setGenreMovies(genreData);
   };
 
-  // Fetch movies by franchise
-  const fetchFranchiseMovies = async () => {
-    let franchiseData = {};
-    for (let franchise of franchises) {
-      try {
-        const response = await axios.get(`${API_BASE_URL}/franchises/${franchise}`);
-        franchiseData[franchise] = response.data;
-      } catch (error) {
-        console.error(`Error fetching ${franchise} movies`, error);
-      }
-    }
-    setFranchiseMovies(franchiseData);
-  };
-
   // Fetch user's watchlist from Firebase
   const fetchWatchlist = async () => {
     try {
@@ -90,74 +94,110 @@ const Homepage = () => {
     }
   };
 
+  const handleGenreSelect = (genre) => {
+    setSelectedGenre(genre);
+  };
+
   return (
     <div className="homepage">
-      {/* Header */}
-      <header className="homepage-header">
-        <div className="homepage-title">
-          <h1>Welcome to Streamverse</h1>
-          <h3>{user?.email}</h3>
+      {/* Navbar */}
+      <nav className="navbar">
+        <div className="logo">Streamverse</div>
+        <div className="nav-links">
+          <Link to="/" className="active">Home</Link>
+          <Link to="/franchises">Explore Franchises</Link>
+          <Link to="/tools">Tools </Link>
+          </div>
+        <div className="profile-icon" onClick={() => navigate("/profile")}>
+          <FaUser />
         </div>
-        <button className="user-btn" onClick={logout}>Logout</button>
-      </header>
+      </nav>
 
-      {/* Trending Movies */}
-      <section className="movie-section">
-        <h2>🔥 Trending Movies</h2>
-        <div className="movie-grid">
-          {trendingMovies.map(movie => (
-            <div key={movie.id} className="movie-card">
-              <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={movie.title} />
-              <p>{movie.title}</p>
+      <div className="content-container">
+        {/* Left Section */}
+        <div className="left-section">
+          {/* Search Bar */}
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Search movies..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+            <FaSearch className="search-icon" />
+          </div>
+
+          {/* Welcome Section */}
+          <div className="welcome-section">
+            <h2>Welcome</h2>
+            <p>{user?.displayName || user?.email}</p>
+          </div>
+
+          {/* Watchlist */}
+          <div className="watchlist-section">
+            <h3>Your Watchlist</h3>
+            {watchlist.length > 0 ? (
+              <div className="watchlist-grid">
+                {watchlist.map((movie) => (
+                  <div key={movie.id} className="watchlist-card">
+                    <img src={movie.poster} alt={movie.title} />
+                    <p>{movie.title}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="empty-watchlist">Your watchlist is empty</p>
+            )}
+          </div>
+        </div>
+
+        {/* Right Section */}
+        <div className="right-section">
+          {/* Genre Selection with header and filter/sort buttons */}
+          <div className="genre-container">
+            <div className="genre-header">
+              <h2>Trending in Animation</h2>
+              <div className="genre-actions">
+                <button className="filter-button">
+                  <MdFilterList />
+                </button>
+                <button className="sort-button">
+                  <MdSort />
+                </button>
+              </div>
             </div>
-          ))}
+            <div className="genre-grid">
+              {genres.map((genre) => (
+                <button
+                  key={genre}
+                  className={`genre-tile ${selectedGenre === genre ? "active" : ""}`}
+                  onClick={() => handleGenreSelect(genre)}
+                >
+                  <span className="genre-icon">{genreIcons[genre]}</span>
+                  <span className="genre-text">{genre}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Movies by Selected Genre */}
+          <div className="genre-movies">
+            <h3>{selectedGenre} Movies</h3>
+            <div className="movie-grid">
+              {genreMovies[selectedGenre]?.map((movie) => (
+                <div key={movie.id} className="movie-card">
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+                    alt={movie.title}
+                  />
+                  <p>{movie.title}</p>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-      </section>
-
-      {/* Movies by Genre */}
-      {Object.keys(genreMovies).map(genre => (
-        <section key={genre} className="movie-section">
-          <h2>{genre} Movies</h2>
-          <div className="movie-grid">
-            {genreMovies[genre]?.map(movie => (
-              <div key={movie.id} className="movie-card">
-                <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={movie.title} />
-                <p>{movie.title}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
-
-      {/* Movies by Franchise */}
-      {Object.keys(franchiseMovies).map(franchise => (
-        <section key={franchise} className="movie-section">
-          <h2>{franchise} Franchise</h2>
-          <div className="movie-grid">
-            {franchiseMovies[franchise]?.map(movie => (
-              <div key={movie.id} className="movie-card">
-                <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={movie.title} />
-                <p>{movie.title}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      ))}
-
-      {/* Watchlist */}
-      {watchlist.length > 0 && (
-        <section className="movie-section">
-          <h2>Your Watchlist</h2>
-          <div className="movie-grid">
-            {watchlist.map(movie => (
-              <div key={movie.id} className="movie-card">
-                <img src={movie.poster} alt={movie.title} />
-                <p>{movie.title}</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
+      </div>
     </div>
   );
 };

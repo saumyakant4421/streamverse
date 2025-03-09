@@ -4,17 +4,19 @@ const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = "https://api.themoviedb.org/3";
 
 const GENRES = {
-  Action: 28,
-  Adventure: 12,
-  Animation: 16,
-  Comedy: 35,
-  Crime: 80,
-  Documentary: 99,
-  Drama: 18,
-  Fantasy: 14,
-  Horror: 27,
-  SciFi: 878
-};
+    Action: 28,
+    Adventure: 12,
+    Animation: 16,
+    Comedy: 35,
+    Crime: 80,
+    Documentary: 99,
+    Drama: 18,
+    Fantasy: 14,
+    Horror: 27,
+    "Science Fiction": 878 // ✅ Correct key
+  };
+  
+  
 
 const FRANCHISES = {
   Marvel: 420818,
@@ -67,25 +69,30 @@ const fetchMovieDetails = async (movieId) => {
   }
 };
 
-const fetchMoviesByGenre = async (genreId) => {
-  const url = `${TMDB_BASE_URL}/discover/movie`;
-  const params = { api_key: TMDB_API_KEY, with_genres: genreId };
+const fetchMoviesByGenre = async (genreId, page = 1) => {
+    const url = `${TMDB_BASE_URL}/discover/movie`;
+    const params = { 
+      api_key: TMDB_API_KEY, 
+      with_genres: genreId,
+      page: page // ✅ Define page properly
+    };
+    
+    console.log(`Fetching movies by genre ID ${genreId} from: ${url}`);
   
-  console.log(`Fetching movies by genre ID ${genreId} from: ${url}`);
-  
-  try {
-    const response = await axios.get(url, { params });
-    return response.data.results;
-  } catch (error) {
-    console.error(`Error fetching movies for genre ID ${genreId}:`);
-    console.error(`Status: ${error.response?.status}`);
-    console.error(`Message: ${error.message}`);
-    if (error.response?.data) {
-      console.error("API Error:", error.response.data);
+    try {
+      const response = await axios.get(url, { params });
+      return response.data.results;
+    } catch (error) {
+      console.error(`Error fetching movies for genre ID ${genreId}:`);
+      console.error(`Status: ${error.response?.status}`);
+      console.error(`Message: ${error.message}`);
+      if (error.response?.data) {
+        console.error("API Error:", error.response.data);
+      }
+      return [];
     }
-    return [];
-  }
-};
+  };
+  
 
 const fetchMoviesByFranchise = async (collectionId) => {
   const url = `${TMDB_BASE_URL}/collection/${collectionId}`;

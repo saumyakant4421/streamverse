@@ -1,12 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { FaUser, FaSearch, FaHeart, FaTheaterMasks, FaGhost } from "react-icons/fa";
-import { MdMovie, MdOutlineBeachAccess, MdOutlineLocalMovies, MdFilterList, MdSort } from "react-icons/md";
+import { MdMovie, MdOutlineBeachAccess, MdOutlineLocalMovies } from "react-icons/md";
 import { GiPunchingBag, GiCrimeSceneTape, GiDramaMasks, GiMagicPortal } from "react-icons/gi";
 import "../styles/homepage.scss";
-import logo from "../assets/logo.png";
 
 const API_BASE_URL = "http://localhost:4001/api/movies"; // Backend API
 
@@ -30,13 +29,6 @@ const genreIcons = {
   "SciFi": <MdMovie />
 };
 
-const franchises = [
-  "Marvel", "DC", "HarryPotter", "StarWars",
-  "JurassicPark", "LordOfTheRings", "FastAndFurious",
-  "Transformers", "MissionImpossible", "Spiderman",
-  "XMen", "JohnWick"
-];
-
 const Homepage = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -47,17 +39,59 @@ const Homepage = () => {
   const [watchlist, setWatchlist] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState("Action");
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
+  // Redirect if not authenticated
   useEffect(() => {
     if (!user) {
-      navigate("/login"); // Redirect to login if not authenticated
+      navigate("/login");
       return;
     }
 
     fetchTrendingMovies();
     fetchGenreMovies();
     fetchWatchlist();
-  }, [user]);
+  }, [user, navigate]);
+
+  // Properly implemented debounced search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setShowSearchResults(false);
+      return;
+    }
+    setIsSearchLoading(true);
+    setShowSearchResults(true);
+    
+    const source = axios.CancelToken.source(); // Create cancel token
+
+    const searchMovies = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/search`, {
+          params: { query: searchQuery },
+          cancelToken: source.token, // Attach cancel token
+        });
+        setSearchResults(response.data || []);
+      } catch (error) {
+        if (axios.isCancel(error)) {
+          console.log("Previous request canceled");
+        } else {
+          console.error("Error searching movies", error);
+          setSearchResults([]);
+        }
+      } finally {
+        setIsSearchLoading(false);
+      }
+    };
+
+    const timeoutId = setTimeout(searchMovies, 500);
+    return () => {
+      clearTimeout(timeoutId);
+      source.cancel(); // Cancel previous request on re-render
+    };
+  }, [searchQuery]);
 
   // Fetch trending movies
   const fetchTrendingMovies = async () => {
@@ -83,10 +117,9 @@ const Homepage = () => {
     setGenreMovies(genreData);
   };
 
-  // Fetch user's watchlist from Firebase
+  // Fetch user's watchlist 
   const fetchWatchlist = async () => {
     try {
-      // Replace with your Firebase API endpoint for watchlist
       const response = await axios.get(`http://localhost:5001/api/user/watchlist?uid=${user.uid}`);
       setWatchlist(response.data);
     } catch (error) {
@@ -94,10 +127,124 @@ const Homepage = () => {
     }
   };
 
+  // Streaming platform redirection
+  const handleWatchMovie = (movie) => {
+    const streamingPlatforms = {
+      Netflix: `https://www.netflix.com/search?q=${encodeURIComponent(movie.title)}`,
+      Disney: `https://www.disneyplus.com/search?q=${encodeURIComponent(movie.title)}`,
+      AmazonPrime: `https://www.amazon.com/s?k=${encodeURIComponent(movie.title)}+movie`,
+    };
+
+    const defaultPlatform = streamingPlatforms.Netflix;
+    window.open(defaultPlatform, '_blank');
+  };
+
+  // Genre selection handler
   const handleGenreSelect = (genre) => {
     setSelectedGenre(genre);
   };
 
+  // Handle search input blur to hide results when clicking outside
+  const handleSearchBlur = (e) => {
+    // Small delay to allow click events on search results to register
+    setTimeout(() => {
+      setShowSearchResults(false);
+    }, 200);
+  };
+
+  // Handle search input focus to show results again if query exists
+  const handleSearchFocus = () => {
+    if (searchQuery.trim() !== '') {
+      setShowSearchResults(true);
+    }
+  };
+
+  // Close search results
+  const handleCloseSearch = () => {
+    setSearchQuery("");
+    setSearchResults([]);
+    setShowSearchResults(false);
+  };
+
+  // MovieCard Component with fixed hover effects
+  const MovieCard = ({ movie, onWatch }) => {
+    return (
+      <div className="movie-card">
+        <div className="poster-container">
+          <img
+            src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
+            alt={movie.title}
+          />
+        </div>
+        <p className="movie-title">{movie.title}</p>
+        <div className="movie-hover-overlay">
+          <div className="movie-overview">
+            {movie.overview ? 
+              movie.overview : 
+              'No overview available'
+            }
+          </div>
+          <div className="movie-actions">
+            <button 
+              className="watch-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                onWatch(movie);
+              }}
+            >
+              Watch Now
+            </button>
+            <button 
+              className="details-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                navigate(`/movie/${movie.id}`);
+              }}
+            >
+              Details
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Search Result Card - a simplified version for search results
+  const SearchResultCard = ({ movie }) => {
+    return (
+      <div 
+        className="search-result-item"
+        onClick={() => navigate(`/movie/${movie.id}`)}
+      >
+        <div className="search-result-poster">
+          {movie.poster_path ? (
+            <img
+              src={`https://image.tmdb.org/t/p/w92${movie.poster_path}`}
+              alt={movie.title}
+            />
+          ) : (
+            <div className="no-poster">No Image</div>
+          )}
+        </div>
+        <div className="search-result-details">
+          <h4>{movie.title}</h4>
+          <p>{movie.release_date ? new Date(movie.release_date).getFullYear() : 'Unknown'}</p>
+          <div className="search-result-actions">
+            <button 
+              className="search-watch-btn"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleWatchMovie(movie);
+              }}
+            >
+              Watch
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+  
   return (
     <div className="homepage">
       {/* Navbar */}
@@ -106,8 +253,8 @@ const Homepage = () => {
         <div className="nav-links">
           <Link to="/" className="active">Home</Link>
           <Link to="/franchises">Explore Franchises</Link>
-          <Link to="/tools">Tools </Link>
-          </div>
+          <Link to="/tools">Tools</Link>
+        </div>
         <div className="profile-icon" onClick={() => navigate("/profile")}>
           <FaUser />
         </div>
@@ -123,9 +270,39 @@ const Homepage = () => {
               placeholder="Search movies..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={handleSearchFocus}
+              onBlur={handleSearchBlur}
               className="search-input"
             />
             <FaSearch className="search-icon" />
+            
+            {searchQuery && (
+              <button 
+                className="clear-search-btn"
+                onClick={handleCloseSearch}
+              >
+                ×
+              </button>
+            )}
+
+            {isSearchLoading && <div className="loading-spinner">Loading...</div>}
+
+            {showSearchResults && searchResults.length > 0 && (
+              <div className="search-results">
+                {searchResults.map(movie => (
+                  <SearchResultCard 
+                    key={movie.id} 
+                    movie={movie}
+                  />
+                ))}
+              </div>
+            )}
+            
+            {showSearchResults && searchQuery && !isSearchLoading && searchResults.length === 0 && (
+              <div className="search-results">
+                <div className="no-results">No movies found matching "{searchQuery}"</div>
+              </div>
+            )}
           </div>
 
           {/* Welcome Section */}
@@ -154,18 +331,10 @@ const Homepage = () => {
 
         {/* Right Section */}
         <div className="right-section">
-          {/* Genre Selection with header and filter/sort buttons */}
+          {/* Genre Selection with header */}
           <div className="genre-container">
             <div className="genre-header">
-              <h2>Trending in Animation</h2>
-              <div className="genre-actions">
-                <button className="filter-button">
-                  <MdFilterList />
-                </button>
-                <button className="sort-button">
-                  <MdSort />
-                </button>
-              </div>
+              <h2>Trending in {selectedGenre}</h2>
             </div>
             <div className="genre-grid">
               {genres.map((genre) => (
@@ -186,13 +355,11 @@ const Homepage = () => {
             <h3>{selectedGenre} Movies</h3>
             <div className="movie-grid">
               {genreMovies[selectedGenre]?.map((movie) => (
-                <div key={movie.id} className="movie-card">
-                  <img
-                    src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                    alt={movie.title}
-                  />
-                  <p>{movie.title}</p>
-                </div>
+                <MovieCard 
+                  key={movie.id} 
+                  movie={movie}
+                  onWatch={handleWatchMovie}
+                />
               ))}
             </div>
           </div>

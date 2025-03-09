@@ -6,6 +6,17 @@ const {
     GENRES,
     FRANCHISES,
   } = require("../services/movieService");
+
+
+  const axios = require("axios");
+  require('dotenv').config();
+  
+  const GENRE_ALIASES = {
+    SciFi: "Science Fiction" // ✅ Map "SciFi" to "Science Fiction"
+  };
+
+  const TMDB_API_KEY = process.env.TMDB_API_KEY;
+  const TMDB_BASE_URL = "https://api.themoviedb.org/3";
   
   const getTrendingMovies = async (req, res) => {
     try {
@@ -25,18 +36,28 @@ const {
     }
   };
   
-  const getMoviesByGenre = async (req, res) => {
-    const genreKey = Object.keys(GENRES).find(
-      (key) => key.toLowerCase() === req.params.genre.toLowerCase()
-    );
-    if (!genreKey) return res.status(400).json({ error: "Invalid genre" });
-    try {
-      const movies = await fetchMoviesByGenre(GENRES[genreKey]);
-      res.json(movies);
-    } catch (error) {
-      res.status(500).json({ error: "Failed to fetch movies by genre" });
-    }
-  };
+const getMoviesByGenre = async (req, res) => {
+  let genreName = req.params.genre;
+  
+  // Convert alias if needed
+  if (GENRE_ALIASES[genreName]) {
+    genreName = GENRE_ALIASES[genreName];
+  }
+
+  const genreKey = Object.keys(GENRES).find(
+    (key) => key.toLowerCase() === genreName.toLowerCase()
+  );
+
+  if (!genreKey) return res.status(400).json({ error: "Invalid genre" });
+
+  try {
+    const movies = await fetchMoviesByGenre(GENRES[genreKey]);
+    res.json(movies);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch movies by genre" });
+  }
+};
+
   
   const getMoviesByFranchise = async (req, res) => {
     const franchiseKey = Object.keys(FRANCHISES).find(
@@ -51,6 +72,40 @@ const {
     }
   };
   
-  module.exports = { getTrendingMovies, getMovieDetails, getMoviesByGenre, getMoviesByFranchise };
+  // New Search Movies Function
+  const searchMovies = async (req, res) => {
+    const { query } = req.query;
+    
+    if (!query) {
+      return res.status(400).json({ error: "Search query is required" });
+    }
+  
+    try {
+      const response = await axios.get(`${TMDB_BASE_URL}/search/movie`, {
+        params: {
+          api_key: TMDB_API_KEY,
+          query,
+          page: 1,
+          include_adult: false
+        }
+      });
+  
+      if (response.data && response.data.results) {
+        res.json(response.data.results);
+      } else {
+        res.status(404).json({ error: "No movies found" });
+      }
+    } catch (error) {
+      console.error("Search Movies Error:", error.response?.data || error.message);
+      res.status(500).json({ error: "Failed to search movies" });
+    }
+  };
   
   
+  module.exports = { 
+    getTrendingMovies, 
+    getMovieDetails, 
+    getMoviesByGenre, 
+    getMoviesByFranchise,
+    searchMovies
+  };

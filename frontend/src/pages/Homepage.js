@@ -89,7 +89,7 @@ const Homepage = () => {
     const timeoutId = setTimeout(searchMovies, 500);
     return () => {
       clearTimeout(timeoutId);
-      source.cancel(); // Cancel previous request on re-render
+      source.cancel(); 
     };
   }, [searchQuery]);
 
@@ -127,16 +127,33 @@ const Homepage = () => {
     }
   };
 
-  // Streaming platform redirection
-  const handleWatchMovie = (movie) => {
-    const streamingPlatforms = {
-      Netflix: `https://www.netflix.com/search?q=${encodeURIComponent(movie.title)}`,
-      Disney: `https://www.disneyplus.com/search?q=${encodeURIComponent(movie.title)}`,
-      AmazonPrime: `https://www.amazon.com/s?k=${encodeURIComponent(movie.title)}+movie`,
-    };
+  // Add to watchlist functionality
+  const handleAddToWatchlist = async (movie) => {
+    try {
+      // Check if movie is already in watchlist
+      const isInWatchlist = watchlist.some(item => item.id === movie.id);
+      if (isInWatchlist) {
+        console.log("Movie already in watchlist");
+        return;
+      }
 
-    const defaultPlatform = streamingPlatforms.Netflix;
-    window.open(defaultPlatform, '_blank');
+      // Prepare movie data for watchlist
+      const watchlistItem = {
+        id: movie.id,
+        title: movie.title,
+        poster: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+        uid: user.uid
+      };
+
+      // Add to watchlist in database
+      await axios.post(`http://localhost:5001/api/user/watchlist/add`, watchlistItem);
+      
+      // Update local watchlist state
+      setWatchlist([...watchlist, watchlistItem]);
+      
+    } catch (error) {
+      console.error("Error adding movie to watchlist", error);
+    }
   };
 
   // Genre selection handler
@@ -167,7 +184,7 @@ const Homepage = () => {
   };
 
   // MovieCard Component with fixed hover effects
-  const MovieCard = ({ movie, onWatch }) => {
+  const MovieCard = ({ movie, onAddToWatchlist }) => {
     return (
       <div className="movie-card">
         <div className="poster-container">
@@ -189,10 +206,10 @@ const Homepage = () => {
               className="watch-btn"
               onClick={(e) => {
                 e.stopPropagation();
-                onWatch(movie);
+                onAddToWatchlist(movie);
               }}
             >
-              Watch Now
+              Watch Later
             </button>
             <button 
               className="details-btn"
@@ -209,7 +226,7 @@ const Homepage = () => {
     );
   };
 
-  // Search Result Card - a simplified version for search results
+  // Search Result Card - modified to show Details instead of Watch
   const SearchResultCard = ({ movie }) => {
     return (
       <div 
@@ -234,10 +251,10 @@ const Homepage = () => {
               className="search-watch-btn"
               onClick={(e) => {
                 e.stopPropagation();
-                handleWatchMovie(movie);
+                navigate(`/movie/${movie.id}`);
               }}
             >
-              Watch
+              Details
             </button>
           </div>
         </div>
@@ -255,7 +272,7 @@ const Homepage = () => {
           <Link to="/franchises">Explore Franchises</Link>
           <Link to="/tools">Tools</Link>
         </div>
-        <div className="profile-icon" onClick={() => navigate("/profile")}>
+        <div className="profile-icon" onClick={() => navigate("/user")}>
           <FaUser />
         </div>
       </nav>
@@ -317,7 +334,11 @@ const Homepage = () => {
             {watchlist.length > 0 ? (
               <div className="watchlist-grid">
                 {watchlist.map((movie) => (
-                  <div key={movie.id} className="watchlist-card">
+                  <div 
+                    key={movie.id} 
+                    className="watchlist-card"
+                    onClick={() => navigate(`/movie/${movie.id}`)}
+                  >
                     <img src={movie.poster} alt={movie.title} />
                     <p>{movie.title}</p>
                   </div>
@@ -358,7 +379,7 @@ const Homepage = () => {
                 <MovieCard 
                   key={movie.id} 
                   movie={movie}
-                  onWatch={handleWatchMovie}
+                  onAddToWatchlist={handleAddToWatchlist}
                 />
               ))}
             </div>

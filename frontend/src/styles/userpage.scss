@@ -1,0 +1,569 @@
+.user-page {
+    background-color: #0a1930;
+    min-height: 100vh;
+    color: #e5e9f0;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    display: flex;
+    
+    &::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: url('../assets/bg-pattern.jpg');
+      background-size: cover;
+      opacity: 0.5;
+      z-index: 0;
+    }
+    
+    // Sidebar styling
+    .sidebar {
+      width: 280px;
+      background-color: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(15px);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 32px 24px;
+      position: fixed;
+      height: 100vh;
+      z-index: 10;
+      box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
+      display: flex;
+      flex-direction: column;
+      
+      .profile-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin-bottom: 32px;
+        
+        .profile-pic {
+          width: 100px;
+          height: 100px;
+          border-radius: 16px;
+          object-fit: cover;
+          border: 2px solid rgba(46, 107, 255, 0.3);
+          margin-bottom: 16px;
+          background-color: rgba(18, 36, 71, 0.7);
+        }
+        
+        h2 {
+          font-size: 18px;
+          font-weight: 600;
+          color: #fff;
+          margin: 8px 0;
+          text-align: center;
+        }
+        
+        .logout-btn {
+          background-color: rgba(255, 255, 255, 0.1);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          border-radius: 8px;
+          padding: 8px 16px;
+          color: #a9c2ff;
+          font-size: 14px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          margin-top: 16px;
+          
+          &:hover {
+            background-color: rgba(46, 107, 255, 0.3);
+            color: white;
+            transform: translateY(-2px);
+          }
+        }
+      }
+      
+      .menu {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        
+        button {
+          text-align: left;
+          background-color: rgba(5, 11, 22, 0.6);
+          border: 1px solid rgba(46, 107, 255, 0.2);
+          border-radius: 10px;
+          padding: 12px 16px;
+          color: #a9c2ff;
+          font-weight: 500;
+          font-size: 15px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          
+          &:hover {
+            background-color: rgba(46, 107, 255, 0.2);
+            transform: translateY(-2px);
+          }
+          
+          &.active {
+            background-color: rgba(46, 107, 255, 0.3);
+            color: white;
+            border-color: rgba(96, 134, 222, 0.6);
+            position: relative;
+            
+            &::after {
+              content: "";
+              position: absolute;
+              left: 0;
+              top: 20%;
+              height: 60%;
+              width: 3px;
+              background-color: #81a8ff;
+              border-radius: 0 4px 4px 0;
+            }
+          }
+        }
+      }
+    }
+    
+    // Main content area
+    .content {
+      flex: 1;
+      padding: 32px;
+      margin-left: 280px;
+      position: relative;
+      z-index: 1;
+      
+      h2 {
+        font-size: 24px;
+        font-weight: 600;
+        margin: 0 0 24px;
+        color: #fff;
+        padding-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      
+      .movie-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+        gap: 24px;
+        
+        // Empty state message (not a movie title)
+        > p {
+          grid-column: 1 / -1;
+          text-align: center;
+          color: rgba(255, 255, 255, 0.5);
+          font-size: 16px;
+          padding: 48px 0;
+          background-color: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+        }
+        
+        .movie-card {
+          background-color: rgba(255, 255, 255, 0.05);
+          border-radius: 12px;
+          overflow: hidden;
+          transition: all 0.2s ease;
+          display: flex;
+          flex-direction: column;
+          height: 370px; /* Fixed height to accommodate title and button */
+          position: relative;
+          
+          &:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(46, 107, 255, 0.2);
+            
+            .movie-buttons {
+              opacity: 1;
+              visibility: visible;
+            }
+            
+            img {
+              filter: brightness(0.3);
+            }
+          }
+          
+          img {
+            width: 100%;
+            height: 280px; /* Movie tile is 280px as requested */
+            object-fit: cover;
+            transition: all 0.3s ease;
+          }
+          
+          // Movie title (inside card)
+          p {
+            font-size: 14px;
+            font-weight: 500;
+            margin: 0;
+            padding: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(10, 25, 48, 0.7);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: left;
+            height: 40px; /* Fixed height for title */
+            display: flex;
+            align-items: center;
+          }
+          
+          .movie-buttons {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 280px; /* Match the image height */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            padding: 10px;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 5;
+            
+            button {
+              background-color: rgba(8, 33, 2, 0.9);
+              color: white;
+              border: 1px solid rgba(255, 255, 255, 0.2);
+              border-radius: 6px;
+              padding: 8px 12px;
+              cursor: pointer;
+              font-size: 12px;
+              font-weight: 500;
+              transition: all 0.2s ease;
+              white-space: nowrap;
+              width: 80%; /* Make buttons more consistent width */
+              
+              &:hover {
+                background-color: rgba(14, 50, 6, 0.9);
+                transform: translateY(-2px);
+              }
+              
+              &:last-child {
+                background-color: rgba(155, 27, 27, 0.9);
+                
+                &:hover {
+                  background-color: rgba(185, 32, 32, 0.9);
+                }
+              }
+            }
+          }
+          
+          .details-btn {
+            background-color: rgba(46, 107, 255, 0.3);
+            color: white;
+            border: none;
+            border-radius: 0 0 12px 12px;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            transition: background-color 0.2s ease;
+            margin-top: 0; /* Push button to bottom */
+            height: 40px; /* Fixed height for button */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            
+            &:hover {
+              background-color: rgba(46, 107, 255, 0.5);
+            }
+          }
+        }
+      }
+      
+      .clear-btn {
+        background-color: rgba(255, 70, 70, 0.15);
+        color: #ff9a9a;
+        border: 1px solid rgba(255, 70, 70, 0.3);
+        border-radius: 8px;
+        padding: 8px 16px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        margin-bottom: 24px;
+        
+        &:hover {
+          background-color: rgba(255, 70, 70, 0.3);
+          color: white;
+          transform: translateY(-2px);
+        }
+      }
+      
+      .account-settings {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 24px;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        
+        h3 {
+          font-size: 18px;
+          font-weight: 500;
+          color: #a9c2ff;
+          margin: 0 0 20px;
+          padding-bottom: 12px;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .settings-group {
+          margin-bottom: 32px;
+          
+          .form-field {
+            margin-bottom: 16px;
+            
+            label {
+              display: block;
+              margin-bottom: 8px;
+              font-size: 14px;
+              color: rgba(255, 255, 255, 0.7);
+            }
+            
+            input {
+              width: 100%;
+              background-color: rgba(5, 11, 22, 0.6);
+              border: 1px solid rgba(46, 107, 255, 0.2);
+              border-radius: 8px;
+              padding: 12px 16px;
+              color: #e5e9f0;
+              font-size: 15px;
+              transition: all 0.2s ease;
+              
+              &:focus {
+                border-color: rgba(96, 134, 222, 0.6);
+                outline: none;
+                box-shadow: 0 0 0 2px rgba(46, 107, 255, 0.2);
+              }
+              
+              &::placeholder {
+                color: rgba(255, 255, 255, 0.3);
+              }
+            }
+          }
+        }
+        
+        .btn-change-password, 
+        .btn-delete-account {
+          display: block;
+          width: 100%;
+          max-width: 300px;
+          margin-bottom: 16px;
+          text-align: center;
+          padding: 12px 16px;
+          border-radius: 10px;
+          font-weight: 500;
+          font-size: 15px;
+          cursor: pointer;
+          transition: all 0.2s ease;
+        }
+        
+        .btn-change-password {
+          background-color: rgba(46, 107, 255, 0.3);
+          color: white;
+          border: 1px solid rgba(96, 134, 222, 0.6);
+          
+          &:hover {
+            background-color: rgba(46, 107, 255, 0.5);
+            transform: translateY(-2px);
+          }
+        }
+        
+        .btn-delete-account {
+          background-color: rgba(255, 70, 70, 0.15);
+          color: #ff9a9a;
+          border: 1px solid rgba(255, 70, 70, 0.3);
+          
+          &:hover {
+            background-color: rgba(255, 70, 70, 0.3);
+            color: white;
+            transform: translateY(-2px);
+          }
+        }
+      }
+    }
+    
+    // Responsive styles
+    @media (max-width: 992px) {
+      .sidebar {
+        width: 280px;
+      }
+      
+      .content {
+        margin-left: 280px;
+        
+        .movie-list {
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+
+          .movie-card {
+            height: 360px;
+            
+            img {
+              height: 280px;
+            }
+          }
+        }
+      }
+    }
+    
+    @media (max-width: 768px) {
+      flex-direction: column;
+      
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+        padding: 20px;
+        border-right: none;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        
+        .profile-section {
+          flex-direction: row;
+          align-items: center;
+          margin-bottom: 16px;
+          
+          .profile-pic {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 0;
+            margin-right: 16px;
+          }
+          
+          h2 {
+            margin: 0;
+            text-align: left;
+          }
+          
+          .logout-btn {
+            margin-top: 0;
+            margin-left: auto;
+          }
+        }
+        
+        .menu {
+          flex-direction: row;
+          flex-wrap: wrap;
+          
+          button {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            
+            &.active::after {
+              top: auto;
+              bottom: 0;
+              left: 20%;
+              width: 60%;
+              height: 3px;
+              border-radius: 4px 4px 0 0;
+            }
+          }
+        }
+      }
+      
+      .content {
+        margin-left: 0;
+        padding: 20px;
+        
+        .movie-list {
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+          gap: 16px;
+          
+          .movie-card {
+            height: 360px;
+            
+            img {
+              height: 280px;
+            }
+            
+            .movie-buttons {
+              height: 280px;
+            }
+            
+            p {
+              padding: 10px;
+              font-size: 13px;
+            }
+            
+            .details-btn {
+              font-size: 13px;
+            }
+          }
+        }
+      }
+    }
+    
+    @media (max-width: 576px) {
+      .sidebar {
+        padding: 16px;
+        
+        .profile-section {
+          .profile-pic {
+            width: 50px;
+            height: 50px;
+          }
+          
+          h2 {
+            font-size: 16px;
+            max-width: 120px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+          
+          .logout-btn {
+            padding: 6px 12px;
+            font-size: 12px;
+          }
+        }
+        
+        .menu {
+          button {
+            font-size: 13px;
+            padding: 8px;
+          }
+        }
+      }
+      
+      .content {
+        padding: 16px;
+        
+        h2 {
+          font-size: 20px;
+          margin-bottom: 16px;
+        }
+        
+        .movie-list {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 12px;
+          
+          .movie-card {
+            height: 360px;
+            
+            img {
+              height: 280px;
+            }
+            
+            .movie-buttons {
+              height: 280px;
+              padding: 10px;
+              flex-direction: row;
+              flex-wrap: wrap;
+              
+              button {
+                font-size: 11px;
+                padding: 6px 10px;
+                width: 100%; /* Full width on small screens */
+              }
+            }
+            
+            p {
+              padding: 8px;
+              font-size: 12px;
+              height: 40px;
+            }
+            
+            .details-btn {
+              padding: 6px;
+              font-size: 12px;
+              height: 40px;
+            }
+          }
+        }
+      }
+    }
+  }

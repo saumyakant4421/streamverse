@@ -210,3 +210,124 @@ exports.verifyToken = (req, res, next) => {
     res.status(400).json({ message: "Invalid Token!" });
   }
 };
+
+// Add movie to watchlist
+exports.addToWatchlist = async (req, res) => {
+    try {
+      const { id, title, poster, uid } = req.body;
+      
+      if (!id || !title || !poster || !uid) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+  
+      const db = require("../firebase").db;
+      const watchlistRef = db.collection("watchlists").doc(uid);
+      const watchlistDoc = await watchlistRef.get();
+  
+      if (!watchlistDoc.exists) {
+        // Create new watchlist for user
+        await watchlistRef.set({
+          movies: [{ id, title, poster, addedAt: new Date() }]
+        });
+      } else {
+        // Update existing watchlist
+        const watchlist = watchlistDoc.data();
+        
+        // Check if movie already exists in watchlist
+        const movieExists = watchlist.movies.some(movie => movie.id === id);
+        if (movieExists) {
+          return res.status(400).json({ error: "Movie already in watchlist" });
+        }
+        
+        // Add movie to watchlist
+        await watchlistRef.update({
+          movies: [...watchlist.movies, { id, title, poster, addedAt: new Date() }]
+        });
+      }
+  
+      res.status(200).json({ message: "Movie added to watchlist" });
+    } catch (error) {
+      console.error("Error adding to watchlist:", error);
+      res.status(500).json({ error: "Failed to add movie to watchlist" });
+    }
+  };
+  
+  // Get user's watchlist
+  exports.getWatchlist = async (req, res) => {
+    try {
+      const { uid } = req.query;
+      
+      if (!uid) {
+        return res.status(400).json({ error: "User ID is required" });
+      }
+  
+      const db = require("../firebase").db;
+      const watchlistRef = db.collection("watchlists").doc(uid);
+      const watchlistDoc = await watchlistRef.get();
+  
+      if (!watchlistDoc.exists) {
+        return res.status(200).json([]); // Return empty array if no watchlist
+      }
+  
+      const watchlist = watchlistDoc.data();
+      // Sort by most recently added
+      const sortedMovies = watchlist.movies.sort((a, b) => 
+        b.addedAt.toDate() - a.addedAt.toDate()
+      );
+  
+      res.status(200).json(sortedMovies);
+    } catch (error) {
+      console.error("Error fetching watchlist:", error);
+      res.status(500).json({ error: "Failed to fetch watchlist" });
+    }
+  };
+
+// Remove movie from watchlist
+exports.removeFromWatchlist = async (req, res) => {
+    try {
+      const { uid, movieId } = req.query;
+      
+      if (!uid || !movieId) {
+        return res.status(400).json({ error: "User ID and Movie ID are required" });
+      }
+  
+      const db = require("../firebase").db;
+      const watchlistRef = db.collection("watchlists").doc(uid);
+      const watchlistDoc = await watchlistRef.get();
+  
+      if (!watchlistDoc.exists) {
+        return res.status(404).json({ error: "Watchlist not found" });
+      }
+  
+      const watchlist = watchlistDoc.data();
+      const updatedMovies = watchlist.movies.filter(movie => movie.id !== parseInt(movieId));
+      
+      await watchlistRef.update({ movies: updatedMovies });
+  
+      res.status(200).json({ message: "Movie removed from watchlist" });
+    } catch (error) {
+      console.error("Error removing from watchlist:", error);
+      res.status(500).json({ error: "Failed to remove movie from watchlist" });
+    }
+  };
+  
+  // Clear entire watchlist
+  exports.clearWatchlist = async (req, res) => {
+    try {
+      const { uid } = req.query;
+      
+      if (!uid) {
+        return res.status(400).json({ error: "User ID is required" });
+      }
+  
+      const db = require("../firebase").db;
+      const watchlistRef = db.collection("watchlists").doc(uid);
+      
+      await watchlistRef.update({ movies: [] });
+  
+      res.status(200).json({ message: "Watchlist cleared" });
+    } catch (error) {
+      console.error("Error clearing watchlist:", error);
+      res.status(500).json({ error: "Failed to clear watchlist" });
+    }
+  };

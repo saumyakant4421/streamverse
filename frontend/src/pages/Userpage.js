@@ -10,6 +10,9 @@ const UserPage = () => {
   const [watchlist, setWatchlist] = useState([]);
   const [watchedMovies, setWatchedMovies] = useState([]);
   const [activeTab, setActiveTab] = useState("watchlist");
+  
+  // Base API URL
+  const API_BASE_URL = "http://localhost:5001/api/user";
 
   useEffect(() => {
     if (!user) {
@@ -22,7 +25,7 @@ const UserPage = () => {
 
   const fetchWatchlist = async () => {
     try {
-      const response = await axios.get(`http://localhost:5001/api/user/watchlist?uid=${user.uid}`);
+      const response = await axios.get(`${API_BASE_URL}/watchlist?uid=${user.uid}`);
       setWatchlist(response.data);
     } catch (error) {
       console.error("Error fetching watchlist", error);
@@ -31,7 +34,7 @@ const UserPage = () => {
 
   const fetchWatchedMovies = async () => {
     try {
-      const response = await axios.get(`/api/user/watched?uid=${user.uid}`);
+      const response = await axios.get(`${API_BASE_URL}/watched?uid=${user.uid}`);
       setWatchedMovies(response.data);
     } catch (error) {
       console.error("Error fetching watched movies", error);
@@ -39,29 +42,50 @@ const UserPage = () => {
   };
 
   const removeFromWatchlist = async (movieId) => {
-    await axios.delete(`/api/user/watchlist/remove?uid=${user.uid}&movieId=${movieId}`);
-    fetchWatchlist();
+    try {
+      await axios.delete(`${API_BASE_URL}/watchlist/remove?uid=${user.uid}&movieId=${movieId}`);
+      fetchWatchlist();
+    } catch (error) {
+      console.error("Error removing from watchlist", error);
+    }
   };
 
   const clearWatchlist = async () => {
-    await axios.delete(`/api/user/watchlist/clear?uid=${user.uid}`);
-    setWatchlist([]);
+    try {
+      await axios.delete(`${API_BASE_URL}/watchlist/clear?uid=${user.uid}`);
+      setWatchlist([]);
+    } catch (error) {
+      console.error("Error clearing watchlist", error);
+    }
   };
 
   const markAsWatched = async (movie) => {
-    await axios.post(`/api/user/watched/add`, { uid: user.uid, movie });
-    removeFromWatchlist(movie.id);
-    fetchWatchedMovies();
+    try {
+      await axios.post(`${API_BASE_URL}/watched/add`, { uid: user.uid, movie });
+      console.log(movie.id);
+      removeFromWatchlist(movie.id);
+      fetchWatchedMovies();
+    } catch (error) {
+      console.error("Error marking as watched", error);
+    }
   };
 
   const removeFromWatched = async (movieId) => {
-    await axios.delete(`/api/user/watched/remove?uid=${user.uid}&movieId=${movieId}`);
-    fetchWatchedMovies();
+    try {
+      await axios.delete(`${API_BASE_URL}/watched/remove?uid=${user.uid}&movieId=${movieId}`);
+      fetchWatchedMovies();
+    } catch (error) {
+      console.error("Error removing from watched", error);
+    }
   };
 
   const clearWatchedMovies = async () => {
-    await axios.delete(`/api/user/watched/clear?uid=${user.uid}`);
-    setWatchedMovies([]);
+    try {
+      await axios.delete(`${API_BASE_URL}/watched/clear?uid=${user.uid}`);
+      setWatchedMovies([]);
+    } catch (error) {
+      console.error("Error clearing watched movies", error);
+    }
   };
 
   return (

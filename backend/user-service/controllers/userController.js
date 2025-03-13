@@ -331,3 +331,134 @@ exports.removeFromWatchlist = async (req, res) => {
       res.status(500).json({ error: "Failed to clear watchlist" });
     }
   };
+
+  // Add movie to watched list
+exports.addToWatched = async (req, res) => {
+  try {
+    const { uid, movie } = req.body;
+    
+    if (!uid || !movie || !movie.id || !movie.title || !movie.poster) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const db = require("../firebase").db;
+    const watchedRef = db.collection("watched").doc(uid);
+    const watchedDoc = await watchedRef.get();
+
+    if (!watchedDoc.exists) {
+      // Create new watched list for user
+      await watchedRef.set({
+        movies: [{ 
+          id: movie.id, 
+          title: movie.title, 
+          poster: movie.poster, 
+          watchedAt: new Date() 
+        }]
+      });
+    } else {
+      // Update existing watched list
+      const watched = watchedDoc.data();
+      
+      // Check if movie already exists in watched list
+      const movieExists = watched.movies.some(m => m.id === movie.id);
+      if (movieExists) {
+        return res.status(400).json({ error: "Movie already in watched list" });
+      }
+      
+      // Add movie to watched list
+      await watchedRef.update({
+        movies: [...watched.movies, { 
+          id: movie.id, 
+          title: movie.title, 
+          poster: movie.poster, 
+          watchedAt: new Date() 
+        }]
+      });
+    }
+
+    res.status(200).json({ message: "Movie added to watched list" });
+  } catch (error) {
+    console.error("Error adding to watched list:", error);
+    res.status(500).json({ error: "Failed to add movie to watched list" });
+  }
+};
+
+// Get user's watched movies
+exports.getWatched = async (req, res) => {
+  try {
+    const { uid } = req.query;
+    
+    if (!uid) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const db = require("../firebase").db;
+    const watchedRef = db.collection("watched").doc(uid);
+    const watchedDoc = await watchedRef.get();
+
+    if (!watchedDoc.exists) {
+      return res.status(200).json([]); // Return empty array if no watched list
+    }
+
+    const watched = watchedDoc.data();
+    // Sort by most recently watched
+    const sortedMovies = watched.movies.sort((a, b) => 
+      b.watchedAt.toDate() - a.watchedAt.toDate()
+    );
+
+    res.status(200).json(sortedMovies);
+  } catch (error) {
+    console.error("Error fetching watched list:", error);
+    res.status(500).json({ error: "Failed to fetch watched list" });
+  }
+};
+
+// Remove movie from watched list
+exports.removeFromWatched = async (req, res) => {
+  try {
+    const { uid, movieId } = req.query;
+    
+    if (!uid || !movieId) {
+      return res.status(400).json({ error: "User ID and Movie ID are required" });
+    }
+
+    const db = require("../firebase").db;
+    const watchedRef = db.collection("watched").doc(uid);
+    const watchedDoc = await watchedRef.get();
+
+    if (!watchedDoc.exists) {
+      return res.status(404).json({ error: "Watched list not found" });
+    }
+
+    const watched = watchedDoc.data();
+    const updatedMovies = watched.movies.filter(movie => movie.id !== parseInt(movieId));
+    
+    await watchedRef.update({ movies: updatedMovies });
+
+    res.status(200).json({ message: "Movie removed from watched list" });
+  } catch (error) {
+    console.error("Error removing from watched list:", error);
+    res.status(500).json({ error: "Failed to remove movie from watched list" });
+  }
+};
+
+// Clear entire watched list
+exports.clearWatched = async (req, res) => {
+  try {
+    const { uid } = req.query;
+    
+    if (!uid) {
+      return res.status(400).json({ error: "User ID is required" });
+    }
+
+    const db = require("../firebase").db;
+    const watchedRef = db.collection("watched").doc(uid);
+    
+    await watchedRef.update({ movies: [] });
+
+    res.status(200).json({ message: "Watched list cleared" });
+  } catch (error) {
+    console.error("Error clearing watched list:", error);
+    res.status(500).json({ error: "Failed to clear watched list" });
+  }
+};

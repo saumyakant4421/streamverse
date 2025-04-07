@@ -100,6 +100,19 @@ const getMoviesByGenre = async (req, res) => {
       res.status(500).json({ error: "Failed to search movies" });
     }
   };
+
+  const getSimilarMovies = async (req, res) => {
+    try {
+      const response = await axios.get(`${TMDB_BASE_URL}/movie/${req.params.id}/similar`, {
+        params: {
+          api_key: TMDB_API_KEY,
+        }
+      });
+      res.json(response.data.results);
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch similar movies" });
+    }
+  };
   
   
   module.exports = { 
@@ -107,5 +120,6 @@ const getMoviesByGenre = async (req, res) => {
     getMovieDetails, 
     getMoviesByGenre, 
     getMoviesByFranchise,
-    searchMovies
+    searchMovies,
+    getSimilarMovies
   };

@@ -3,6 +3,8 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Homepage from "./pages/Homepage";
 import UserPage from "./pages/Userpage";
+import MoviePage from "./pages/MoviePage";
+
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
 const ProtectedRoute = ({ children }) => {
@@ -31,6 +33,15 @@ function App() {
               <UserPage />
             </ProtectedRoute>
           }
+        />
+        <Route
+        path = "/movie/:id"
+        element={
+          <ProtectedRoute>
+            <MoviePage />
+          </ProtectedRoute>
+          
+        }
         />
       </Routes>
     </AuthProvider>

@@ -1,10 +1,11 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
-import { FaUser, FaSearch, FaHeart, FaTheaterMasks, FaGhost } from "react-icons/fa";
+import { FaSearch, FaHeart, FaTheaterMasks, FaGhost } from "react-icons/fa";
 import { MdMovie, MdOutlineBeachAccess, MdOutlineLocalMovies } from "react-icons/md";
 import { GiPunchingBag, GiCrimeSceneTape, GiDramaMasks, GiMagicPortal } from "react-icons/gi";
+import Navbar from "./Navbar.js"; 
 import "../styles/homepage.scss";
 
 const API_BASE_URL = "http://localhost:4001/api/movies"; // Backend API
@@ -264,18 +265,8 @@ const Homepage = () => {
   
   return (
     <div className="homepage">
-      {/* Navbar */}
-      <nav className="navbar">
-        <div className="logo">Streamverse</div>
-        <div className="nav-links">
-          <Link to="/" className="active">Home</Link>
-          <Link to="/franchises">Explore Franchises</Link>
-          <Link to="/tools">Tools</Link>
-        </div>
-        <div className="profile-icon" onClick={() => navigate("/user")}>
-          <FaUser />
-        </div>
-      </nav>
+      {/* Use the Navbar component */}
+      <Navbar />
 
       <div className="content-container">
         {/* Left Section */}

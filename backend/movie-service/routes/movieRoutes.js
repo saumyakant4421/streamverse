@@ -6,16 +6,17 @@ const {
   getMoviesByFranchise,
   searchMovies,
   getSimilarMovies,
+  getStreamingProviders,
 } = require("../controllers/movieController");
 
 const router = express.Router();
 
 router.get("/trending", getTrendingMovies);
-router.get("/search", searchMovies);  // Add this route
+router.get("/search", searchMovies);
 router.get("/genres/:genre", getMoviesByGenre);
 router.get("/franchises/:franchise", getMoviesByFranchise);
 router.get("/:id", getMovieDetails);
 router.get("/:id/similar", getSimilarMovies);
-
+router.get("/:id/streaming", getStreamingProviders);
 
 module.exports = router;

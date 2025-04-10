@@ -100,6 +100,7 @@ const UserPage = () => {
           <button onClick={() => setActiveTab("watchlist")} className={activeTab === "watchlist" ? "active" : ""}>Watchlist</button>
           <button onClick={() => setActiveTab("watched")} className={activeTab === "watched" ? "active" : ""}>Watched Movies</button>
           <button onClick={() => setActiveTab("settings")} className={activeTab === "settings" ? "active" : ""}>Account Settings</button>
+          <button onClick={() => navigate("/")} className="home-btn">Back to Home</button>
         </div>
       </div>
 

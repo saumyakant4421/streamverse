@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, updateProfile } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, sendPasswordResetEmail, updateProfile, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -16,6 +16,14 @@ const auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 const db = getFirestore(app);
 
+// Enable persistence
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log('Firebase persistence enabled');
+  })
+  .catch((error) => {
+    console.error('Error enabling persistence:', error);
+  });
 
 const generateUsername = (name) => {
     const base = name.toLowerCase().replace(/\s+/g, "_");

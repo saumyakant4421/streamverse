@@ -114,6 +114,16 @@
               border-radius: 0 4px 4px 0;
             }
           }
+
+          &.home-btn {
+            background-color: rgba(46, 107, 255, 0.15);
+            margin-top: 8px;
+            
+            &:hover {
+              background-color: rgba(46, 107, 255, 0.3);
+              color: white;
+            }
+          }
         }
       }
     }

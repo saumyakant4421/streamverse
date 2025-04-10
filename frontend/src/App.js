@@ -4,6 +4,7 @@ import Signup from "./pages/Signup";
 import Homepage from "./pages/Homepage";
 import UserPage from "./pages/Userpage";
 import MoviePage from "./pages/MoviePage";
+import { Toaster } from 'react-hot-toast';
 
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
@@ -15,6 +16,7 @@ const ProtectedRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
+      <Toaster position="top-right" />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />

@@ -4,6 +4,7 @@ const {
   fetchMoviesByGenre,
   fetchMoviesByFranchise,
   fetchStreamingProviders,
+  fetchSimilarMovies,
   GENRES,
   FRANCHISES,
 } = require("../services/movieService");
@@ -89,10 +90,8 @@ const getSimilarMovies = async (req, res) => {
   const { id } = req.params;
   if (!id || isNaN(id)) return res.status(400).json({ error: "Invalid movie ID" });
   try {
-    const response = await axios.get(`${TMDB_BASE_URL}/movie/${id}/similar`, {
-      params: { api_key: TMDB_API_KEY },
-    });
-    res.json(response.data.results || []);
+    const similarMovies = await fetchSimilarMovies(id);
+    res.json(similarMovies);
   } catch (error) {
     console.error("Controller Error in getSimilarMovies:", error.message);
     res.status(500).json({ error: "Failed to fetch similar movies" });

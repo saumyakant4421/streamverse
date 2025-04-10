@@ -4,6 +4,8 @@ import Navbar from "./Navbar.js";
 import axios from 'axios';
 import "../styles/moviepage.scss";
 import { isProviderAvailable, getProviderUrl } from '../utils/streamingProviders';
+import { toast } from 'react-hot-toast';
+import { useAuth } from '../context/AuthContext';
 
 import NetflixIcon from '../assets/icons/netflix_2504929.png';
 import AmazonIcon from '../assets/icons/icons8-amazon-prime-video.svg';
@@ -19,6 +21,7 @@ const API_BASE_URL = 'http://localhost:4001/api';
 const MovieDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -28,18 +31,21 @@ const MovieDetailPage = () => {
   const [isInWatchlist, setIsInWatchlist] = useState(false);
   const [isWatched, setIsWatched] = useState(false);
   const [streamingData, setStreamingData] = useState(null);
+  const [watchlistLoading, setWatchlistLoading] = useState(false);
+  const [watchedLoading, setWatchedLoading] = useState(false);
 
-  const authToken = localStorage.getItem('authToken');
-  const userId = localStorage.getItem('userId');
+  // Get the auth token from Firebase user
+  const authToken = user ? user.getIdToken ? user.getIdToken() : null : null;
+  const userId = user ? user.uid : null;
 
   const movieService = axios.create({
     baseURL: API_BASE_URL,
-    headers: { Authorization: authToken || '' }
+    headers: { Authorization: authToken ? `Bearer ${authToken}` : '' }
   });
 
   const userService = axios.create({
-    baseURL: 'http://localhost:5001/api/users',
-    headers: { Authorization: authToken || '' }
+    baseURL: 'http://localhost:5001/api/user',
+    headers: { Authorization: authToken ? `Bearer ${authToken}` : '' }
   });
 
   const ottProviderMap = {
@@ -67,7 +73,7 @@ const MovieDetailPage = () => {
         const similarResponse = await fetch(`${API_BASE_URL}/movies/${id}/similar`);
         if (similarResponse.ok) {
           const similarData = await similarResponse.json();
-          setSimilarMovies(similarData.results || []);
+          setSimilarMovies(similarData || []);
         }
         
         console.log(`Fetching streaming data for movie ID ${id} in region US`);
@@ -83,7 +89,7 @@ const MovieDetailPage = () => {
           setStreamingData(null);
         }
         
-        if (userId && authToken) await checkWatchlistAndWatchedStatus();
+        if (user) await checkWatchlistAndWatchedStatus();
       } catch (err) {
         console.error('Error fetching movie details:', err);
         setError(err.message);
@@ -93,14 +99,22 @@ const MovieDetailPage = () => {
     };
 
     if (id) fetchMovieDetails();
-  }, [id, userId, authToken]);
+  }, [id, user]);
 
   const checkWatchlistAndWatchedStatus = async () => {
+    if (!user) return;
+    
     try {
-      const watchlistResponse = await userService.get(`/watchlist`, { params: { uid: userId } });
+      // Get the current auth token
+      const token = await user.getIdToken();
+      
+      // Update the userService headers with the current token
+      userService.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
+      const watchlistResponse = await userService.get(`/watchlist`, { params: { uid: user.uid } });
       setIsInWatchlist(watchlistResponse.data.some(item => item.id === Number(id)));
 
-      const watchedResponse = await userService.get(`/watched`, { params: { uid: userId } });
+      const watchedResponse = await userService.get(`/watched`, { params: { uid: user.uid } });
       setIsWatched(watchedResponse.data.some(item => item.id === Number(id)));
     } catch (error) {
       console.error('Error checking watchlist/watched status:', error.response?.data || error.message);
@@ -108,46 +122,94 @@ const MovieDetailPage = () => {
   };
 
   const handleAddToWatchlist = async () => {
-    if (!userId || !authToken) {
-      alert('Please log in to add movies to your watchlist');
+    if (!user) {
+      toast.error('Please log in to add movies to your watchlist');
       navigate('/login');
       return;
     }
+    
+    setWatchlistLoading(true);
     try {
+      // Get the current auth token
+      const token = await user.getIdToken();
+      
+      // Update the userService headers with the current token
+      userService.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       if (isInWatchlist) {
-        await userService.delete(`/watchlist/remove`, { params: { uid: userId, movieId: movie.id } });
+        await userService.delete(`/watchlist/remove`, { params: { uid: user.uid, movieId: movie.id } });
         setIsInWatchlist(false);
-        console.log("Removed from watchlist");
+        toast.success('Removed from watchlist');
       } else {
-        await userService.post(`/watchlist/add`, { uid: userId, id: movie.id, title: movie.title, poster: movie.poster_path });
+        // Format the poster path as a full URL, matching the HomePage format
+        const posterPath = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+        
+        await userService.post(`/watchlist/add`, { 
+          uid: user.uid, 
+          id: movie.id, 
+          title: movie.title, 
+          poster: posterPath 
+        });
         setIsInWatchlist(true);
-        console.log("Added to watchlist");
+        toast.success('Added to watchlist');
       }
     } catch (error) {
       console.error('Error updating watchlist:', error.response?.data || error.message);
-      alert(`Failed to update watchlist: ${error.response?.data?.error || error.message}`);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        toast.error('Your session has expired. Please log in again');
+        navigate('/login');
+      } else {
+        toast.error(error.response?.data?.error || 'Failed to update watchlist');
+      }
+    } finally {
+      setWatchlistLoading(false);
     }
   };
 
   const handleAddToWatched = async () => {
-    if (!userId || !authToken) {
-      alert('Please log in to mark movies as watched');
+    if (!user) {
+      toast.error('Please log in to mark movies as watched');
       navigate('/login');
       return;
     }
+    
+    setWatchedLoading(true);
     try {
+      // Get the current auth token
+      const token = await user.getIdToken();
+      
+      // Update the userService headers with the current token
+      userService.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      
       if (isWatched) {
-        await userService.delete(`/watched/remove`, { params: { uid: userId, movieId: movie.id } });
+        await userService.delete(`/watched/remove`, { params: { uid: user.uid, movieId: movie.id } });
         setIsWatched(false);
-        console.log("Removed from watched");
+        toast.success('Removed from watched list');
       } else {
-        await userService.post(`/watched/add`, { uid: userId, movie: { id: movie.id, title: movie.title, poster: movie.poster_path } });
+        // Format the poster path as a full URL, matching the HomePage format
+        const posterPath = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
+        
+        await userService.post(`/watched/add`, { 
+          uid: user.uid, 
+          movie: { 
+            id: movie.id, 
+            title: movie.title, 
+            poster: posterPath 
+          } 
+        });
         setIsWatched(true);
-        console.log("Added to watched");
+        toast.success('Added to watched list');
       }
     } catch (error) {
       console.error('Error updating watched list:', error.response?.data || error.message);
-      alert(`Failed to update watched list: ${error.response?.data?.error || error.message}`);
+      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+        toast.error('Your session has expired. Please log in again');
+        navigate('/login');
+      } else {
+        toast.error(error.response?.data?.error || 'Failed to update watched list');
+      }
+    } finally {
+      setWatchedLoading(false);
     }
   };
 
@@ -256,12 +318,50 @@ const MovieDetailPage = () => {
             <h3>Overview</h3>
             <p>{movie.overview || 'No overview available'}</p>
           </div>
+          
+          {/* Cast Section */}
+          <div className="movie-cast">
+            <h3>Cast</h3>
+            {movie.credits && movie.credits.cast && movie.credits.cast.length > 0 ? (
+              <div className="cast-list">
+                {movie.credits.cast.slice(0, 6).map(actor => (
+                  <div key={actor.id} className="cast-item">
+                    <div className="cast-avatar">
+                      {actor.profile_path ? (
+                        <img 
+                          src={`https://image.tmdb.org/t/p/w185${actor.profile_path}`} 
+                          alt={actor.name} 
+                        />
+                      ) : (
+                        <div className="no-avatar">{actor.name.charAt(0)}</div>
+                      )}
+                    </div>
+                    <div className="cast-info">
+                      <div className="cast-name">{actor.name}</div>
+                      <div className="cast-character">{actor.character}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p>No cast information available</p>
+            )}
+          </div>
+          
           <div className="movie-actions">
-            <button className={`watchlist-btn ${isInWatchlist ? 'active' : ''}`} onClick={handleAddToWatchlist}>
-              {isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
+            <button 
+              className={`watchlist-btn ${isInWatchlist ? 'active' : ''} ${watchlistLoading ? 'loading' : ''}`} 
+              onClick={handleAddToWatchlist}
+              disabled={watchlistLoading}
+            >
+              {watchlistLoading ? 'Updating...' : isInWatchlist ? 'Remove from Watchlist' : 'Add to Watchlist'}
             </button>
-            <button className={`watched-btn ${isWatched ? 'active' : ''}`} onClick={handleAddToWatched}>
-              {isWatched ? 'Remove from Watched' : 'Mark as Watched'}
+            <button 
+              className={`watched-btn ${isWatched ? 'active' : ''} ${watchedLoading ? 'loading' : ''}`} 
+              onClick={handleAddToWatched}
+              disabled={watchedLoading}
+            >
+              {watchedLoading ? 'Updating...' : isWatched ? 'Remove from Watched' : 'Mark as Watched'}
             </button>
           </div>
           <div className="streaming-section">
@@ -304,16 +404,20 @@ const MovieDetailPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* Similar Movies Section - Moved outside movie-content */}
       {similarMovies.length > 0 && (
-        <div className="similar-movies-section">
-          <h2>Similar Movies</h2>
-          <div className="similar-movies">
-            {similarMovies.slice(0, 6).map(movie => (
-              <div key={movie.id} className="similar-movie-card" onClick={() => navigate(`/movie/${movie.id}`)}>
-                <img src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`} alt={movie.title} />
-                <div className="similar-movie-title">{movie.title}</div>
-              </div>
-            ))}
+        <div className="similar-movies-container">
+          <div className="similar-movies-section">
+            <h3>Similar Movies</h3>
+            <div className="similar-movies-grid">
+              {similarMovies.slice(0, 8).map(movie => (
+                <div key={movie.id} className="similar-movie-card" onClick={() => navigate(`/movie/${movie.id}`)}>
+                  <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={movie.title} />
+                  <p>{movie.title}</p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}

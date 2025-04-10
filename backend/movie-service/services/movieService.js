@@ -267,12 +267,35 @@ const fetchMoviesByFranchise = async (collectionId) => {
   }
 };
 
+const fetchSimilarMovies = async (movieId) => {
+  try {
+    console.log(`Fetching similar movies for movie ID ${movieId}`);
+    const data = await makeApiCall(`${TMDB_BASE_URL}/movie/${movieId}/similar`, {
+      api_key: TMDB_API_KEY,
+      language: 'en-US',
+      page: 1
+    });
+    
+    if (!data || !data.results) {
+      console.log('No similar movies found in TMDB response');
+      return [];
+    }
+    
+    console.log(`Found ${data.results.length} similar movies`);
+    return data.results || [];
+  } catch (error) {
+    console.error(`Service Error fetching similar movies for ID ${movieId}:`, error.message);
+    return []; // Return empty array instead of throwing
+  }
+};
+
 module.exports = {
   fetchTrendingMovies,
   fetchMovieDetails,
   fetchMoviesByGenre,
   fetchMoviesByFranchise,
   fetchStreamingProviders,
+  fetchSimilarMovies,
   GENRES,
   FRANCHISES,
 };

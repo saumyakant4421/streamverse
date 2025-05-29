@@ -1,0 +1,325 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+.tools-page {
+  background-color: #0a1930;
+  min-height: 100vh;
+  color: #e5e9f0;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  padding-bottom: 40px;
+
+  .tools-content {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 80px 24px 40px;
+
+    h1 {
+      font-size: 36px;
+      font-weight: 700;
+      color: #fff;
+      margin: 0 0 32px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .tools-list {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+
+      .tool-item {
+        background-color: rgba(255, 255, 255, 0.05);
+        border-radius: 16px;
+        padding: 24px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        transition: transform 0.3s ease;
+
+        &:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 12px 36px rgba(46, 107, 255, 0.15);
+        }
+
+        h2 {
+          font-size: 24px;
+          font-weight: 600;
+          color: #fff;
+          margin: 0 0 16px;
+        }
+
+        p {
+          font-size: 16px;
+          color: rgba(255, 255, 255, 0.8);
+          margin: 0 0 24px;
+        }
+      }
+    }
+  }
+
+  .marathon-planner {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+
+    .error {
+      color: #ff6b6b;
+      text-align: center;
+      font-size: 16px;
+    }
+
+    .spinner {
+      text-align: center;
+      font-size: 16px;
+      color: #fff;
+    }
+
+    .search-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+
+      .movie-item {
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.2s ease;
+
+        &:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 8px 16px rgba(46, 107, 255, 0.2);
+        }
+
+        img {
+          width: 100%;
+          height: 300px;
+          object-fit: cover;
+        }
+
+        .movie-info {
+          padding: 12px;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+
+          h3 {
+            font-size: 16px;
+            font-weight: 500;
+            color: #fff;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          p {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            margin: 0;
+          }
+
+          button {
+            padding: 8px;
+            background-color: #2e6bff;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+
+            &:hover:not(:disabled) {
+              background-color: #1a5ae8;
+              transform: translateY(-1px);
+            }
+
+            &:disabled {
+              opacity: 0.6;
+              cursor: not-allowed;
+            }
+          }
+        }
+      }
+    }
+
+    .bucket-section {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+
+      h2 {
+        font-size: 20px;
+        font-weight: 600;
+        color: #fff;
+        margin: 0 0 16px;
+      }
+
+      p {
+        font-size: 16px;
+        color: rgba(255, 255, 255, 0.7);
+        text-align: center;
+        margin: 0;
+      }
+
+      .bucket-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 16px;
+
+        .bucket-item {
+          background-color: rgba(0, 0, 0, 0.2);
+          border-radius: 12px;
+          overflow: hidden;
+          transition: transform 0.2s ease;
+
+          &:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(46, 107, 255, 0.2);
+          }
+
+          img {
+            width: 100%;
+            height: 300px;
+            object-fit: cover;
+          }
+
+          .bucket-info {
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+
+            h3 {
+              font-size: 16px;
+              font-weight: 500;
+              color: #fff;
+              margin: 0;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+
+            p {
+              font-size: 14px;
+              color: rgba(255, 255, 255, 0.7);
+              margin: 0;
+              text-align: left;
+            }
+
+            button {
+              padding: 8px;
+              background-color: #ff6b6b;
+              border: none;
+              border-radius: 6px;
+              color: #fff;
+              font-size: 14px;
+              font-weight: 500;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              transition: all 0.2s ease;
+
+              &:hover {
+                background-color: #ff5252;
+                transform: translateY(-1px);
+              }
+            }
+          }
+        }
+      }
+
+      .runtime-summary {
+        margin-top: 24px;
+        text-align: center;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-radius: 8px;
+        padding: 16px;
+
+        h3 {
+          font-size: 18px;
+          font-weight: 600;
+          color: #fff;
+          margin: 0 0 12px;
+        }
+
+        p {
+          font-size: 16px;
+          color: #fff;
+          margin: 0 0 8px;
+        }
+      }
+    }
+  }
+
+  @media (max-width: 768px) {
+    .tools-page {
+      .tools-content {
+        padding: 60px 16px 24px;
+
+        h1 {
+          font-size: 28px;
+        }
+
+        .tools-list .tool-item {
+          padding: 16px;
+
+          h2 {
+            font-size: 20px;
+          }
+
+          p {
+            font-size: 14px;
+          }
+        }
+
+        .marathon-planner {
+          .search-results,
+          .bucket-section .bucket-list {
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 12px;
+
+            .movie-item,
+            .bucket-item {
+              img {
+                height: 240px;
+              }
+
+              .movie-info,
+              .bucket-info {
+                h3 {
+                  font-size: 14px;
+                }
+
+                p {
+                  font-size: 12px;
+                }
+
+                button {
+                  font-size: 12px;
+                  padding: 6px;
+                }
+              }
+            }
+          }
+
+          .bucket-section h2 {
+            font-size: 18px;
+          }
+
+          .runtime-summary {
+            padding: 12px;
+
+            h3 {
+              font-size: 16px;
+            }
+
+            p {
+              font-size: 14px;
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,7 +1,5 @@
-// Importing DM Sans Font
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap');
 
-// Variables for consistent colors and effects
 $primary-color: #4361ee;
 $accent-color-1: #3f8efc;
 $accent-color-2: #2ec4b6;
@@ -35,7 +33,7 @@ $glass-shadow: rgba(0, 0, 0, 0.1);
       radial-gradient(circle at 20% 20%, rgba($accent-color-1, 0.08), transparent 25%),
       radial-gradient(circle at 80% 20%, rgba($accent-color-2, 0.08), transparent 25%),
       radial-gradient(circle at 50% 75%, rgba($accent-color-3, 0.08), transparent 30%);
-    animation: gentleRotate 30s linear infinite;
+    animation: gentleRotate 40s linear infinite;
   }
 }
 
@@ -44,7 +42,7 @@ $glass-shadow: rgba(0, 0, 0, 0.1);
     transform: rotate(0deg) scale(1);
   }
   50% {
-    transform: rotate(180deg) scale(1.05);
+    transform: rotate(180deg) scale(1.02);
   }
   100% {
     transform: rotate(360deg) scale(1);
@@ -63,31 +61,41 @@ $glass-shadow: rgba(0, 0, 0, 0.1);
   position: relative;
   z-index: 10;
   overflow: hidden;
+  animation: containerPulse 6s ease-in-out infinite;
   
-  &::before {
+  &::after {
     content: '';
     position: absolute;
-    top: -50%;
-    left: -50%;
+    top: -100%;
+    left: -100%;
     width: 200%;
     height: 200%;
     background: linear-gradient(
       45deg,
-      transparent,
-      rgba(255, 255, 255, 0.4),
-      transparent
+      transparent 40%,
+      rgba(255, 255, 255, 0.5) 50%,
+      transparent 60%
     );
     transform: rotate(45deg);
-    animation: shimmer 12s linear infinite;
+    animation: mirrorShine 5s linear infinite;
   }
 }
 
-@keyframes shimmer {
+@keyframes containerPulse {
+  0%, 100% {
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes mirrorShine {
   0% {
-    transform: translateX(-100%) rotate(45deg);
+    transform: translate(-50%, -50%) rotate(45deg);
   }
   100% {
-    transform: translateX(100%) rotate(45deg);
+    transform: translate(50%, 50%) rotate(45deg);
   }
 }
 
@@ -112,9 +120,8 @@ $glass-shadow: rgba(0, 0, 0, 0.1);
   font-weight: 700;
   text-transform: uppercase;
   position: relative;
-  animation: float 4s ease-in-out infinite;
+  animation: float 5s ease-in-out infinite;
   
-  // Create a subtle gradient effect
   background: linear-gradient(
     180deg, 
     $primary-color,
@@ -125,20 +132,16 @@ $glass-shadow: rgba(0, 0, 0, 0.1);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   filter: drop-shadow(0 0 6px rgba($primary-color, 0.3));
-  
-  // Letter animation delays defined in component
 }
 
 @keyframes float {
   0%, 100% {
     opacity: 0.9;
-    transform: translateY(0) scale(1);
-    filter: brightness(0.95) drop-shadow(0 0 3px rgba($primary-color, 0.3));
+    transform: translateY(0);
   }
   50% {
     opacity: 1;
-    transform: translateY(-8px) scale(1.03);
-    filter: brightness(1.1) drop-shadow(0 0 8px rgba($primary-color, 0.5));
+    transform: translateY(-5px);
   }
 }
 
@@ -157,15 +160,10 @@ $glass-shadow: rgba(0, 0, 0, 0.1);
   left: 0;
   height: 100%;
   width: 30%;
-  background: linear-gradient(
-    90deg,
-    $accent-color-1,
-    $primary-color,
-    $accent-color-2
-  );
+  background: $primary-color;
   border-radius: 6px;
   box-shadow: 0 0 6px rgba($primary-color, 0.4);
-  animation: loading 2s ease-in-out infinite;
+  animation: loading 3s ease-in-out infinite;
 }
 
 .loading-status {
@@ -175,12 +173,12 @@ $glass-shadow: rgba(0, 0, 0, 0.1);
   color: $text-color;
   opacity: 0.7;
   letter-spacing: 1px;
-  animation: pulse 2s ease-in-out infinite;
+  animation: pulse 3s ease-in-out infinite;
 }
 
 @keyframes pulse {
   0%, 100% {
-    opacity: 0.6;
+    opacity: 0.7;
   }
   50% {
     opacity: 0.9;
@@ -196,7 +194,6 @@ $glass-shadow: rgba(0, 0, 0, 0.1);
   }
 }
 
-// Subtle particle effects
 .particles {
   position: absolute;
   width: 100%;

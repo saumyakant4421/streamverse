@@ -1,0 +1,464 @@
+// Theme Variables
+$primary-color: #e50914; // Netflix-inspired red
+$accent-color: #2e6bff; // Blue for interactive elements
+$bg-dark: #0f0f0f;
+$card-bg: rgba(255, 255, 255, 0.05);
+$text-primary: #ffffff;
+$text-secondary: #aaaaaa;
+$border-color: rgba(255, 255, 255, 0.1);
+$shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+$transition: all 0.3s ease;
+$neon-glow: #00ffcc; // Neon cyan for button effects
+$neon-pink: #ff007a; // Neon pink for gradient
+
+// Typography
+$font-stack: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+$font-size-base: 16px;
+$font-size-h1: 2.5rem;
+$font-size-h2: 1.8rem;
+$font-size-h3: 1.2rem;
+
+// Breakpoints
+$mobile: 768px;
+$desktop: 1200px;
+
+// Global Styles
+.recommendation-page {
+  min-height: 100vh;
+  background-color: $bg-dark;
+  color: $text-primary;
+  font-family: $font-stack;
+  font-size: $font-size-base;
+  padding: 2rem;
+  overflow-x: hidden;
+
+  .recommendation-container {
+    max-width: $desktop;
+    margin: 0 auto;
+    padding: 1.5rem;
+
+    .header-container {
+      display: flex;
+      justify-content: space-between; // Pushes button to left, allows right alignment of title
+      align-items: center;
+      margin-bottom: 2rem;
+
+      .title-wrapper {
+        flex: 1; // Takes remaining space to right-align the title
+        display: flex;
+        justify-content: flex-end; // Right-aligns the h1 within this wrapper
+      }
+
+      h1 {
+        font-size: $font-size-h1;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        margin: 0;
+      }
+    }
+  }
+
+  .back-to-home-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px; // Space between icon and text
+    padding: 10px 16px; // Comfortable padding
+    background: linear-gradient(145deg, $text-primary, #f0f0f0); // Subtle gradient for depth
+    border: 1px solid black; // Border with primary color
+    border-radius: 8px; // Rounded corners for a modern look
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); // Subtle shadow for professionalism
+    cursor: pointer;
+    transition: $transition;
+    font-family: $font-stack; // Clean font stack
+    font-size: 16px;
+    font-weight: 500; // Medium weight for a professional feel
+    color: $bg-dark; // Dark text for contrast
+    text-decoration: none; // Remove underline if used as a link
+
+    .arrow-icon {
+      font-size: 20px; // Slightly larger icon for balance
+      color: black; // Primary color for the icon
+      transition: $transition;
+    }
+
+    &:hover {
+      background: linear-gradient(145deg, #f0f0f0, $text-primary); // Reverse gradient on hover
+      transform: translateY(-2px); // Slight lift effect
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); // Enhanced shadow on hover
+
+      .arrow-icon {
+        transform: translateX(-4px); // Slight left movement for the arrow
+      }
+    }
+  }
+
+  // Tabs
+  .tabs {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid $border-color;
+
+    button {
+      background: none;
+      border: none;
+      color: $text-secondary;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      border-radius: 0.5rem 0.5rem 0 0;
+      transition: $transition;
+      position: relative;
+
+      &:hover {
+        color: $text-primary;
+        background-color: $card-bg;
+      }
+
+      &.active {
+        color: $text-primary;
+        background-color: $primary-color;
+        box-shadow: inset 0 -2px 0 $primary-color;
+      }
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 100%;
+        height: 2px;
+        background-color: $primary-color;
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+      }
+
+      &.active::after {
+        transform: scaleX(1);
+      }
+    }
+  }
+
+  // Personalized Recommendations
+  .personalized-container {
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+
+      h2 {
+        font-size: $font-size-h2;
+        font-weight: 500;
+      }
+
+      .refresh-icon {
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: $transition;
+        color: $accent-color;
+
+        &:hover {
+          color: lighten($accent-color, 10%);
+          transform: rotate(180deg);
+        }
+
+        &.spinning {
+          animation: spin 1s linear infinite;
+        }
+      }
+    }
+  }
+
+  // Loading State
+  .loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    margin: 2rem 0;
+    color: $text-secondary;
+
+    .spinner {
+      width: 2rem;
+      height: 2rem;
+      border: 3px solid $accent-color;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  // Error State
+  .error-message {
+    background-color: rgba($primary-color, 0.2);
+    color: lighten($primary-color, 20%);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+  }
+
+  // Recommendations Grid
+  .recommendations-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); // Fixed 5 columns for desktop
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .movie-card {
+    background-color: $card-bg;
+    border-radius: 0.75rem;
+    overflow: hidden;
+    cursor: pointer;
+    transition: $transition;
+    position: relative;
+
+    &:hover {
+      transform: translateY(-8px);
+      box-shadow: $shadow;
+
+      .movie-poster img {
+        transform: scale(1.1);
+      }
+
+      .movie-overlay {
+        opacity: 1;
+      }
+    }
+
+    .movie-poster {
+      position: relative;
+      height: 350px; // Adjusted height for better fit in 5-column layout
+      overflow: hidden;
+
+      img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+      }
+
+      .no-poster {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: darken($bg-dark, 5%);
+        color: $text-secondary;
+        font-size: 0.9rem;
+        text-align: center;
+      }
+    }
+
+    .movie-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba($bg-dark, 0.9), transparent);
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+
+      .movie-meta {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        color: $text-primary;
+        font-size: 0.9rem;
+
+        .rating {
+          color: #ffd700;
+          font-weight: 600;
+        }
+
+        .genres {
+          color: $text-secondary;
+          font-size: 0.85rem;
+        }
+      }
+    }
+
+    .movie-info {
+      padding: 1rem;
+
+      h3 {
+        margin: 0;
+        font-size: $font-size-h3;
+        font-weight: 500;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .year {
+        color: $text-secondary;
+        font-size: 0.9rem;
+      }
+    }
+  }
+
+  // Chat Container
+  .chat-container {
+    background-color: $card-bg;
+    border-radius: 1rem;
+    padding: 2rem;
+    text-align: center;
+    border: 1px solid $border-color;
+
+    h2 {
+      font-size: $font-size-h2;
+      margin-bottom: 1rem;
+    }
+
+    .placeholder {
+      color: $text-secondary;
+      font-size: 1.1rem;
+      padding: 2rem;
+      background-color: rgba($accent-color, 0.1);
+      border-radius: 0.5rem;
+    }
+  }
+
+  // Empty State
+  .empty-state {
+    text-align: center;
+    color: $text-secondary;
+    font-size: 1.2rem;
+    padding: 2rem;
+    background-color: $card-bg;
+    border-radius: 0.75rem;
+    margin-top: 1.5rem;
+  }
+}
+
+// Animations
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes neon-flicker {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+// Responsive Design
+@media (max-width: $mobile) {
+  .recommendation-page {
+    padding: 1rem;
+
+    .recommendation-container {
+      padding: 1rem;
+
+      .header-container {
+        flex-direction: column;
+        align-items: center; // Center everything on mobile
+        gap: 1rem;
+
+        .title-wrapper {
+          width: 100%; // Full width to ensure right alignment
+          justify-content: center; // Center the title on mobile for better UX
+        }
+
+        h1 {
+          font-size: 2rem;
+          text-align: center; // Center the title on mobile
+        }
+
+        .back-to-home-btn {
+          padding: 8px 12px; // Slightly smaller padding for mobile
+          font-size: 14px; // Smaller font size for mobile
+
+          .arrow-icon {
+            font-size: 18px; // Adjust icon size for mobile
+          }
+        }
+      }
+    }
+
+    .tabs {
+      flex-wrap: wrap;
+      gap: 0.5rem;
+
+      button {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+    }
+
+    .recommendations-grid {
+      grid-template-columns: repeat(2, 1fr); // 2 columns for mobile
+      gap: 1rem;
+    }
+
+    .movie-card {
+      .movie-poster {
+        height: 280px; // Adjusted height for mobile
+      }
+
+      .movie-info {
+        h3 {
+          font-size: 1rem;
+        }
+      }
+    }
+
+    .personalized-container {
+      .header {
+        h2 {
+          font-size: 1.5rem;
+        }
+      }
+    }
+  }
+}
+
+@media (min-width: $desktop) {
+  .recommendations-grid {
+    grid-template-columns: repeat(5, 1fr); // Ensure 5 columns for desktop
+  }
+}

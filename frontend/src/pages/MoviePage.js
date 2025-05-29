@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from "./Navbar.js"; 
+import SearchBar from '../components/SearchBar';
 import axios from 'axios';
 import "../styles/moviepage.scss";
 import { isProviderAvailable, getProviderUrl } from '../utils/streamingProviders';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '../context/AuthContext';
+import LoadingScreen from '../components/LoadingScreen';
 
 import NetflixIcon from '../assets/icons/netflix_2504929.png';
 import AmazonIcon from '../assets/icons/icons8-amazon-prime-video.svg';
@@ -33,20 +35,54 @@ const MovieDetailPage = () => {
   const [streamingData, setStreamingData] = useState(null);
   const [watchlistLoading, setWatchlistLoading] = useState(false);
   const [watchedLoading, setWatchedLoading] = useState(false);
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState('');
+  const [commentsLoading, setCommentsLoading] = useState(false);
+  const [commentError, setCommentError] = useState(null);
 
-  // Get the auth token from Firebase user
-  const authToken = user ? user.getIdToken ? user.getIdToken() : null : null;
-  const userId = user ? user.uid : null;
+  console.log('Current user:', user);
 
   const movieService = axios.create({
     baseURL: API_BASE_URL,
-    headers: { Authorization: authToken ? `Bearer ${authToken}` : '' }
   });
+
+  // Add interceptor to attach fresh token for each request
+  movieService.interceptors.request.use(
+    async (config) => {
+      if (user && user.getIdToken) {
+        try {
+          const token = await user.getIdToken(true);
+          config.headers.Authorization = `Bearer ${token}`;
+        } catch (error) {
+          console.error('Error fetching ID token:', error);
+          throw new axios.Cancel('Failed to fetch ID token');
+        }
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
 
   const userService = axios.create({
     baseURL: 'http://localhost:5001/api/user',
-    headers: { Authorization: authToken ? `Bearer ${authToken}` : '' }
   });
+
+  // Add interceptor for userService
+  userService.interceptors.request.use(
+    async (config) => {
+      if (user && user.getIdToken) {
+        try {
+          const token = await user.getIdToken(true);
+          config.headers.Authorization = `Bearer ${token}`;
+        } catch (error) {
+          console.error('Error fetching ID token:', error);
+          throw new axios.Cancel('Failed to fetch ID token');
+        }
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
 
   const ottProviderMap = {
     netflix: { id: 1, name: 'Netflix', icon: NetflixIcon },
@@ -76,18 +112,15 @@ const MovieDetailPage = () => {
           setSimilarMovies(similarData || []);
         }
         
-        console.log(`Fetching streaming data for movie ID ${id} in region US`);
         const streamingResponse = await fetch(`${API_BASE_URL}/movies/${id}/streaming?region=US`);
-        console.log('Streaming response status:', streamingResponse.status);
-        
         if (streamingResponse.ok) {
           const streamingData = await streamingResponse.json();
-          console.log('Streaming data received:', streamingData);
           setStreamingData(streamingData);
         } else {
-          console.error('Failed to fetch streaming data:', streamingResponse.status);
           setStreamingData(null);
         }
+        
+        await fetchComments();
         
         if (user) await checkWatchlistAndWatchedStatus();
       } catch (err) {
@@ -101,16 +134,79 @@ const MovieDetailPage = () => {
     if (id) fetchMovieDetails();
   }, [id, user]);
 
+  const fetchComments = async () => {
+    try {
+      setCommentsLoading(true);
+      setCommentError(null);
+      const response = await movieService.get(`/comments/${id}`);
+      console.log('Fetched comments:', response.data);
+      setComments(response.data || []);
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+      setComments([]);
+      setCommentError('Failed to load comments. Please try again.');
+    } finally {
+      setCommentsLoading(false);
+    }
+  };
+
+  const handleAddComment = async (e) => {
+    e.preventDefault();
+    if (!user) {
+      toast.error('Please log in to post a comment');
+      navigate('/login');
+      return;
+    }
+
+    if (!newComment.trim()) {
+      toast.error('Comment cannot be empty');
+      return;
+    }
+
+    try {
+      const response = await movieService.post(`/comments/${id}`, { comment: newComment });
+      setComments([response.data, ...comments]);
+      setNewComment('');
+      toast.success('Comment posted successfully');
+    } catch (error) {
+      console.error('Error posting comment:', error);
+      const errorMessage = error.response?.status === 401
+        ? 'Authentication failed. Please log in again.'
+        : error.response?.data?.error || 'Failed to post comment';
+      toast.error(errorMessage);
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
+    }
+  };
+
+  const handleDeleteComment = async (commentId) => {
+    if (!user) {
+      toast.error('Please log in to delete a comment');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      await movieService.delete(`/comments/${commentId}`);
+      setComments(comments.filter(comment => comment.id !== commentId));
+      toast.success('Comment deleted successfully');
+    } catch (error) {
+      console.error('Error deleting comment:', error);
+      const errorMessage = error.response?.status === 401
+        ? 'Authentication failed. Please log in again.'
+        : error.response?.data?.error || 'Failed to delete comment';
+      toast.error(errorMessage);
+      if (error.response?.status === 401) {
+        navigate('/login');
+      }
+    }
+  };
+
   const checkWatchlistAndWatchedStatus = async () => {
     if (!user) return;
     
     try {
-      // Get the current auth token
-      const token = await user.getIdToken();
-      
-      // Update the userService headers with the current token
-      userService.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       const watchlistResponse = await userService.get(`/watchlist`, { params: { uid: user.uid } });
       setIsInWatchlist(watchlistResponse.data.some(item => item.id === Number(id)));
 
@@ -130,18 +226,11 @@ const MovieDetailPage = () => {
     
     setWatchlistLoading(true);
     try {
-      // Get the current auth token
-      const token = await user.getIdToken();
-      
-      // Update the userService headers with the current token
-      userService.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       if (isInWatchlist) {
         await userService.delete(`/watchlist/remove`, { params: { uid: user.uid, movieId: movie.id } });
         setIsInWatchlist(false);
         toast.success('Removed from watchlist');
       } else {
-        // Format the poster path as a full URL, matching the HomePage format
         const posterPath = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
         
         await userService.post(`/watchlist/add`, { 
@@ -155,12 +244,7 @@ const MovieDetailPage = () => {
       }
     } catch (error) {
       console.error('Error updating watchlist:', error.response?.data || error.message);
-      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-        toast.error('Your session has expired. Please log in again');
-        navigate('/login');
-      } else {
-        toast.error(error.response?.data?.error || 'Failed to update watchlist');
-      }
+      toast.error(error.response?.data?.error || 'Failed to update watchlist');
     } finally {
       setWatchlistLoading(false);
     }
@@ -175,18 +259,11 @@ const MovieDetailPage = () => {
     
     setWatchedLoading(true);
     try {
-      // Get the current auth token
-      const token = await user.getIdToken();
-      
-      // Update the userService headers with the current token
-      userService.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      
       if (isWatched) {
         await userService.delete(`/watched/remove`, { params: { uid: user.uid, movieId: movie.id } });
         setIsWatched(false);
         toast.success('Removed from watched list');
       } else {
-        // Format the poster path as a full URL, matching the HomePage format
         const posterPath = `https://image.tmdb.org/t/p/w500${movie.poster_path}`;
         
         await userService.post(`/watched/add`, { 
@@ -202,12 +279,7 @@ const MovieDetailPage = () => {
       }
     } catch (error) {
       console.error('Error updating watched list:', error.response?.data || error.message);
-      if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-        toast.error('Your session has expired. Please log in again');
-        navigate('/login');
-      } else {
-        toast.error(error.response?.data?.error || 'Failed to update watched list');
-      }
+      toast.error(error.response?.data?.error || 'Failed to update watched list');
     } finally {
       setWatchedLoading(false);
     }
@@ -219,12 +291,7 @@ const MovieDetailPage = () => {
 
   const isStreamingServiceAvailable = (serviceName) => {
     const service = ottProviderMap[serviceName];
-    if (!service) {
-      console.log(`No mapping found for service: ${serviceName}`);
-      return false;
-    }
-    
-    // Use the utility function to check availability
+    if (!service) return false;
     return isProviderAvailable(service.id, streamingData);
   };
 
@@ -233,8 +300,6 @@ const MovieDetailPage = () => {
     
     const service = ottProviderMap[serviceName];
     if (!service) return null;
-    
-    // Use the utility function to get the provider URL
     return getProviderUrl(service.id, streamingData, movie.title);
   };
 
@@ -243,41 +308,17 @@ const MovieDetailPage = () => {
       setStreamingLoading(true);
       setStreamingError(null);
       const response = await axios.get(`${API_BASE_URL}/movies/${id}/streaming?region=US`);
-      const data = response.data;
-      
-      // Log the streaming data for debugging
-      console.log('Streaming data received:', data);
-      if (data && data.flatrate) {
-        console.log('Available streaming providers:', data.flatrate.map(p => `${p.provider_name} (ID: ${p.provider_id})`));
-        
-        // Check each provider against our mapping
-        Object.entries(ottProviderMap).forEach(([key, service]) => {
-          const isAvailable = isProviderAvailable(service.id, data);
-          console.log(`${key} (ID: ${service.id}) is ${isAvailable ? 'available' : 'not available'}`);
-        });
-      }
-      
-      setStreamingData(data);
+      setStreamingData(response.data);
     } catch (error) {
       console.error('Error fetching streaming data:', error);
-      setStreamingError(
-        error.response?.data?.message || 
-        'Unable to fetch streaming availability. Please try again later.'
-      );
+      setStreamingError('Unable to fetch streaming availability. Please try again later.');
     } finally {
       setStreamingLoading(false);
     }
   };
 
   if (loading) {
-    return (
-      <div>
-        <Navbar />
-        <div className="loading-container">
-          <div className="loader"></div>
-        </div>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (error || !movie) {
@@ -301,13 +342,97 @@ const MovieDetailPage = () => {
       <div className="movie-content">
         <div className="movie-poster-container">
           <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={movie.title} className="movie-poster" />
+          <SearchBar />
+          <div className="comments-section">
+            <h3>Comments</h3>
+            {commentsLoading ? (
+              <div className="comments-loading">
+                <div className="spinner"></div>
+                <p>Loading comments...</p>
+              </div>
+            ) : commentError ? (
+              <div className="comments-error">
+                <p>{commentError}</p>
+                <button onClick={() => fetchComments()}>Try Again</button>
+              </div>
+            ) : (
+              <>
+                <form onSubmit={handleAddComment} className="comment-form">
+                  <textarea
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    placeholder="Write your comment..."
+                    rows={4}
+                    required
+                  />
+                  <button type="submit" disabled={commentsLoading}>
+                    Post Comment
+                  </button>
+                </form>
+                <div className="comments-list">
+                  {comments.length === 0 ? (
+                    <p>No comments yet. Be the first to comment!</p>
+                  ) : (
+                    comments.map((comment) => {
+                      console.log('Rendering comment:', comment);
+                      let formattedDate = 'Unknown date';
+                      try {
+                        const date = comment.createdAt?.seconds
+                          ? new Date(comment.createdAt.seconds * 1000)
+                          : comment.createdAt
+                          ? new Date(comment.createdAt)
+                          : null;
+                        formattedDate = date && !isNaN(date) ? date.toLocaleDateString() : 'Unknown date';
+                      } catch (err) {
+                        console.warn('Invalid date for comment:', comment.id, err);
+                      }
+                      const avatarInitial = comment.username ? comment.username.charAt(0).toUpperCase() : '?';
+                      const displayName = comment.username || 'Unknown User';
+                      const commentText = comment.comment || 'No comment text';
+                      return (
+                        <div key={comment.id} className="comment-item">
+                          <div className="comment-header">
+                            <div className="user-info">
+                              {comment.photoURL ? (
+                                <img
+                                  src={comment.photoURL}
+                                  alt={displayName}
+                                  className="user-avatar"
+                                />
+                              ) : (
+                                <div className="no-avatar">
+                                  {avatarInitial}
+                                </div>
+                              )}
+                              <span className="comment-username">{displayName}</span>
+                              <span className="comment-date">{formattedDate}</span>
+                            </div>
+                          </div>
+                          <p className="comment-text">{commentText}</p>
+                          {user && user.uid === comment.userId && (
+                            <span
+                              className="delete-comment-icon"
+                              onClick={() => handleDeleteComment(comment.id)}
+                              title="Delete comment"
+                            >
+                              🗑️
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+              </>
+            )}
+          </div>
         </div>
         <div className="movie-info">
           <h1 className="movie-title">{movie.title}</h1>
           <div className="movie-meta">
             <span className="movie-year">{movie.release_date ? movie.release_date.substring(0, 4) : 'N/A'}</span>
             <span className="movie-runtime">{movie.runtime ? `${movie.runtime} min` : 'N/A'}</span>
-            <span className="movie-rating">⭐ {movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
+            <span className="movie-rating">IMDb {movie.vote_average ? movie.vote_average.toFixed(1) : 'N/A'}</span>
           </div>
           <div className="movie-genres">
             {movie.genres && movie.genres.length > 0 ? movie.genres.map(genre => (
@@ -319,7 +444,6 @@ const MovieDetailPage = () => {
             <p>{movie.overview || 'No overview available'}</p>
           </div>
           
-          {/* Cast Section */}
           <div className="movie-cast">
             <h3>Cast</h3>
             {movie.credits && movie.credits.cast && movie.credits.cast.length > 0 ? (
@@ -378,26 +502,34 @@ const MovieDetailPage = () => {
             ) : (
               <div className="streaming-providers">
                 <h3>Streaming Availability</h3>
-                <div className="provider-list">
-                  {Object.entries(ottProviderMap).map(([key, service]) => {
-                    const isAvailable = isStreamingServiceAvailable(key);
-                    const serviceUrl = getStreamingServiceUrl(key);
-                    return (
-                      <div
-                        key={key}
-                        className={`provider-item ${isAvailable ? 'available' : 'unavailable'}`}
-                        onClick={() => isAvailable && handleStreamingServiceClick(serviceUrl)}
-                      >
-                        <img src={service.icon} alt={service.name} />
-                        <span>{service.name}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-                {streamingData && streamingData.link && (
-                  <a href={streamingData.link} target="_blank" rel="noopener noreferrer" className="justwatch-link">
-                    Check on JustWatch
-                  </a>
+                {(!streamingData || !streamingData.flatrate || streamingData.flatrate.length === 0) ? (
+                  <div className="no-providers-message">
+                    <p>Currently, there are no streaming providers for the movie.</p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="provider-list">
+                      {Object.entries(ottProviderMap).map(([key, service]) => {
+                        const isAvailable = isStreamingServiceAvailable(key);
+                        const serviceUrl = getStreamingServiceUrl(key);
+                        return (
+                          <div
+                            key={key}
+                            className={`provider-item ${isAvailable ? 'available' : 'unavailable'}`}
+                            onClick={() => isAvailable && handleStreamingServiceClick(serviceUrl)}
+                          >
+                            <img src={service.icon} alt={service.name} />
+                            <span>{service.name}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {streamingData && streamingData.link && (
+                      <a href={streamingData.link} target="_blank" rel="noopener noreferrer" className="justwatch-link">
+                        Check on JustWatch
+                      </a>
+                    )}
+                  </>
                 )}
               </div>
             )}
@@ -405,7 +537,6 @@ const MovieDetailPage = () => {
         </div>
       </div>
       
-      {/* Similar Movies Section - Moved outside movie-content */}
       {similarMovies.length > 0 && (
         <div className="similar-movies-container">
           <div className="similar-movies-section">

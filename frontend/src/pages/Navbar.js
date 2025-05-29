@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { FaUser } from "react-icons/fa";
-import "../styles/navbar.scss"; // You'll need to create this file with the navbar styles
+import { Link, useLocation } from "react-router-dom";
+import { FaUser, FaRobot, FaHome, FaFilm, FaTools } from "react-icons/fa";
+import "../styles/navbar.scss";
 
 const Navbar = () => {
-  const navigate = useNavigate();
+  const location = useLocation();
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Handle scroll event
@@ -17,10 +17,8 @@ const Navbar = () => {
       }
     };
 
-    // Add event listener
     window.addEventListener('scroll', handleScroll);
     
-    // Clean up
     return () => {
       window.removeEventListener('scroll', handleScroll);
     };
@@ -28,15 +26,40 @@ const Navbar = () => {
 
   return (
     <nav className={`navbar ${isScrolled ? 'scrolled' : ''}`}>
-      <div className="logo">Streamverse</div>
+      <Link to="/" className="logo">Streamverse</Link>
       <div className="nav-links">
-        <Link to="/" className="active">Home</Link>
-        <Link to="/franchises">Explore Franchises</Link>
-        <Link to="/tools">Tools</Link>
+        <Link 
+          to="/" 
+          className={`nav-link ${location.pathname === '/' ? 'active' : ''}`}
+        >
+          <FaHome />
+          <span>Home</span>
+        </Link>
+        <Link 
+          to="/franchises" 
+          className={`nav-link ${location.pathname === '/franchises' ? 'active' : ''}`}
+        >
+          <FaFilm />
+          <span>Explore Franchises</span>
+        </Link>
+        <Link 
+          to="/tools" 
+          className={`nav-link ${location.pathname === '/tools' ? 'active' : ''}`}
+        >
+          <FaTools />
+          <span>Tools</span>
+        </Link>
+        <Link 
+          to="/recommendations" 
+          className={`nav-link tool-button ${location.pathname === '/recommendations' ? 'active' : ''}`}
+        >
+          <FaRobot />
+          <span>Movie AI</span>
+        </Link>
       </div>
-      <div className="profile-icon" onClick={() => navigate("/user")}>
+      <Link to="/user" className="profile-icon">
         <FaUser />
-      </div>
+      </Link>
     </nav>
   );
 };

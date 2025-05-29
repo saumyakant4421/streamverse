@@ -1,9 +1,15 @@
 node_modules/
 package-lock.json
 .env
+.env.example
 .env.local
 .env.production
 .env.development
 
+backend/franchise-service/firebase-adminsdk.json
 backend/user-service/firebaseServiceAccountKey.json
-
+backend/recommendation-service/firebase-adminsdk.json
+backend/movie-service/firebase-adminsdk.json
+backend/additional-service/firebase-adminsdk.json
+backend/recommendation-service/services/firebase-credentials.json
+backend/franchise-service/firebase-adminsdk.json

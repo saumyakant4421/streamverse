@@ -3,7 +3,6 @@ import '../styles/loadingscreen.scss';
 
 const LoadingScreen = () => {
   useEffect(() => {
-    // Initialize letter animations
     const letters = document.querySelectorAll('.letter');
     letters.forEach((letter, index) => {
       letter.style.animationDelay = `${index * 0.1}s`;

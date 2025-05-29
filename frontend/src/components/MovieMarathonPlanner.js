@@ -1,0 +1,138 @@
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'react-hot-toast';
+import { FaTrash } from 'react-icons/fa';
+import MarathonSearchBar from './MarathonSearch';
+
+const API_BASE_URL = 'http://localhost:4004/api/tools/marathon';
+
+const MovieMarathonPlanner = () => {
+  const { user } = useAuth();
+  const [bucket, setBucket] = useState([]);
+  const [totalRuntime, setTotalRuntime] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const movieService = axios.create({
+    baseURL: API_BASE_URL,
+  });
+
+  movieService.interceptors.request.use(
+    async (config) => {
+      if (user && user.getIdToken) {
+        const token = await user.getIdToken(true);
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
+  useEffect(() => {
+    if (user) fetchBucket();
+  }, [user]);
+
+  const fetchBucket = async () => {
+    try {
+      setLoading(true);
+      const response = await movieService.get('/bucket');
+      setBucket(response.data.movies || []);
+      calculateRuntime();
+    } catch (err) {
+      setError('Failed to load bucket');
+      toast.error('Failed to load bucket');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addToBucket = async (movie) => {
+    if (!user) {
+      toast.error('Please log in to add movies');
+      return;
+    }
+    try {
+      setLoading(true);
+      const response = await movieService.post('/bucket/add', { movieId: movie.id });
+      setBucket(response.data.movies);
+      toast.success('Movie added to bucket');
+      calculateRuntime();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to add movie');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const removeFromBucket = async (movieId) => {
+    try {
+      setLoading(true);
+      const response = await movieService.delete(`/bucket/remove/${movieId}`);
+      setBucket(response.data.movies);
+      toast.success('Movie removed from bucket');
+      calculateRuntime();
+    } catch (err) {
+      toast.error('Failed to remove movie');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const calculateRuntime = async () => {
+    if (!user) return;
+    try {
+      const response = await movieService.get('/bucket/runtime');
+      setTotalRuntime(response.data);
+    } catch (err) {
+      setTotalRuntime(null);
+      toast.error('Failed to calculate runtime');
+    }
+  };
+
+  return (
+    <div className="marathon-planner">
+      <MarathonSearchBar
+        onAddToBucket={addToBucket}
+        bucket={bucket}
+        user={user}
+      />
+      {error && <p className="error">{error}</p>}
+      {loading && <div className="spinner">Loading...</div>}
+
+      <div className="bucket-section">
+        <h2>Your Marathon Bucket ({bucket.length}/30)</h2>
+        {bucket.length === 0 ? (
+          <p>No movies in your bucket yet.</p>
+        ) : (
+          <div className="bucket-list">
+            {bucket.map((movie) => (
+              <div key={movie.id} className="bucket-item">
+                <img
+                  src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`}
+                  alt={movie.title}
+                />
+                <div className="bucket-info">
+                  <h3>{movie.title}</h3>
+                  <p>{movie.runtime} min</p>
+                  <button onClick={() => removeFromBucket(movie.id)}>
+                    <FaTrash /> Remove
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {totalRuntime && (
+          <div className="runtime-summary">
+            <h3>Total Runtime</h3>
+            <p>{totalRuntime.formatted} ({totalRuntime.totalMinutes} minutes)</p>
+            <p>{totalRuntime.movieCount} movies</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default MovieMarathonPlanner;

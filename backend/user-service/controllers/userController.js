@@ -25,18 +25,7 @@ exports.sendOtp = async (req, res) => {
     const otp = otpGenerator.generate(6, { digits: true, upperCase: false, specialChars: false });
     otpStore.set(email, { otp, expiresAt: Date.now() + 300000 });
 
-    // Send OTP via email
-    const transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: { user: process.env.EMAIL, pass: process.env.EMAIL_PASSWORD },
-    });
-
-    await transporter.sendMail({
-      from: process.env.EMAIL,
-      to: email,
-      subject: "Streamverse OTP Verification",
-      text: `Your OTP is: ${otp}. It expires in 5 minutes.`,
-    });
+    await sendOTP(email, otp);
 
     console.log("✅ OTP sent successfully!");
     res.status(200).json({ message: "OTP sent successfully" });

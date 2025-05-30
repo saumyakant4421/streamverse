@@ -13,3 +13,5 @@ backend/movie-service/firebase-adminsdk.json
 backend/additional-service/firebase-adminsdk.json
 backend/recommendation-service/services/firebase-credentials.json
 backend/franchise-service/firebase-adminsdk.json
+backend/recommendation-service/logs/combined.log
+backend/recommendation-service/logs/error.log

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { FaHeart, FaTheaterMasks, FaGhost } from "react-icons/fa";
 import { MdMovie, MdOutlineBeachAccess, MdOutlineLocalMovies } from "react-icons/md";
@@ -9,7 +9,7 @@ import Navbar from "./Navbar.js";
 import SearchBar from "../components/SearchBar";
 import "../styles/homepage.scss";
 
-const API_BASE_URL = "http://localhost:4001/api/movies"; // Backend API
+const API_BASE_URL = "http://localhost:4001/api/movies";
 
 const genres = [
   "Action", "Adventure", "Animation", "Comedy",
@@ -17,31 +17,28 @@ const genres = [
   "Horror", "SciFi"
 ];
 
-// Map genre to icon
 const genreIcons = {
-  "Action": <GiPunchingBag />,
-  "Adventure": <MdOutlineBeachAccess />,
-  "Animation": <MdMovie />,
-  "Comedy": <FaTheaterMasks />,
-  "Crime": <GiCrimeSceneTape />,
-  "Documentary": <MdOutlineLocalMovies />,
-  "Drama": <GiDramaMasks />,
-  "Fantasy": <GiMagicPortal />,
-  "Horror": <FaGhost />,
-  "SciFi": <MdMovie />
+  Action: <GiPunchingBag />,
+  Adventure: <MdOutlineBeachAccess />,
+  Animation: <MdMovie />,
+  Comedy: <FaTheaterMasks />,
+  Crime: <GiCrimeSceneTape />,
+  Documentary: <MdOutlineLocalMovies />,
+  Drama: <GiDramaMasks />,
+  Fantasy: <GiMagicPortal />,
+  Horror: <FaGhost />,
+  SciFi: <MdMovie />
 };
 
 const Homepage = () => {
-  const { user, logout } = useAuth();
+  const { user, isDarkMode } = useAuth();
   const navigate = useNavigate();
-
   const [trendingMovies, setTrendingMovies] = useState([]);
   const [genreMovies, setGenreMovies] = useState({});
-  const [franchiseMovies, setFranchiseMovies] = useState({});
   const [watchlist, setWatchlist] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState("Action");
+  const [loading, setLoading] = useState(true);
 
-  // Redirect if not authenticated
   useEffect(() => {
     if (!user) {
       navigate("/login");
@@ -53,7 +50,6 @@ const Homepage = () => {
     fetchWatchlist();
   }, [user, navigate]);
 
-  // Fetch trending movies
   const fetchTrendingMovies = async () => {
     try {
       const response = await axios.get(`${API_BASE_URL}/trending`);
@@ -63,8 +59,8 @@ const Homepage = () => {
     }
   };
 
-  // Fetch movies by genre
   const fetchGenreMovies = async () => {
+    setLoading(true);
     let genreData = {};
     for (let genre of genres) {
       try {
@@ -75,9 +71,9 @@ const Homepage = () => {
       }
     }
     setGenreMovies(genreData);
+    setLoading(false);
   };
 
-  // Fetch user's watchlist
   const fetchWatchlist = async () => {
     try {
       const response = await axios.get(`http://localhost:5001/api/user/watchlist?uid=${user.uid}`);
@@ -87,41 +83,32 @@ const Homepage = () => {
     }
   };
 
-  // Add to watchlist functionality
   const handleAddToWatchlist = async (movie) => {
     try {
-      // Check if movie is already in watchlist
-      const isInWatchlist = watchlist.some(item => item.id === movie.id);
+      const isInWatchlist = watchlist.some((item) => item.id === movie.id);
       if (isInWatchlist) {
         console.log("Movie already in watchlist");
         return;
       }
 
-      // Prepare movie data for watchlist
       const watchlistItem = {
         id: movie.id,
         title: movie.title,
         poster: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
-        uid: user.uid
+        uid: user.uid,
       };
 
-      // Add to watchlist in database
       await axios.post(`http://localhost:5001/api/user/watchlist/add`, watchlistItem);
-
-      // Update local watchlist state
       setWatchlist([...watchlist, watchlistItem]);
-
     } catch (error) {
       console.error("Error adding movie to watchlist", error);
     }
   };
 
-  // Genre selection handler
   const handleGenreSelect = (genre) => {
     setSelectedGenre(genre);
   };
 
-  // MovieCard Component with fixed hover effects
   const MovieCard = ({ movie, onAddToWatchlist }) => {
     return (
       <div className="movie-card">
@@ -134,10 +121,7 @@ const Homepage = () => {
         <p className="movie-title">{movie.title}</p>
         <div className="movie-hover-overlay">
           <div className="movie-overview">
-            {movie.overview ?
-              movie.overview :
-              'No overview available'
-            }
+            {movie.overview ? movie.overview : "No overview available"}
           </div>
           <div className="movie-actions">
             <button
@@ -165,23 +149,15 @@ const Homepage = () => {
   };
 
   return (
-    <div className="homepage">
-      {/* Use the Navbar component */}
+    <div className={`homepage ${isDarkMode ? "dark" : ""}`}>
       <Navbar />
-
       <div className="content-container">
-        {/* Left Section */}
         <div className="left-section">
-          {/* Search Bar */}
           <SearchBar placeholder="Search movies..." />
-
-          {/* Welcome Section */}
           <div className="welcome-section">
             <h2>Welcome</h2>
             <p>{user?.displayName || user?.email}</p>
           </div>
-
-          {/* Watchlist */}
           <div className="watchlist-section">
             <h3>Your Watchlist</h3>
             {watchlist.length > 0 ? (
@@ -202,10 +178,7 @@ const Homepage = () => {
             )}
           </div>
         </div>
-
-        {/* Right Section */}
         <div className="right-section">
-          {/* Genre Selection with header */}
           <div className="genre-container">
             <div className="genre-header">
               <h2>Trending in {selectedGenre}</h2>
@@ -223,19 +196,23 @@ const Homepage = () => {
               ))}
             </div>
           </div>
-
-          {/* Movies by Selected Genre */}
           <div className="genre-movies">
             <h3>{selectedGenre} Movies</h3>
-            <div className="movie-grid">
-              {genreMovies[selectedGenre]?.map((movie) => (
-                <MovieCard
-                  key={movie.id}
-                  movie={movie}
-                  onAddToWatchlist={handleAddToWatchlist}
-                />
-              ))}
-            </div>
+            {loading ? (
+              <p className="empty-watchlist">Loading movies...</p>
+            ) : genreMovies[selectedGenre]?.length > 0 ? (
+              <div className="movie-grid">
+                {genreMovies[selectedGenre].map((movie) => (
+                  <MovieCard
+                    key={movie.id}
+                    movie={movie}
+                    onAddToWatchlist={handleAddToWatchlist}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="empty-watchlist">No movies available for this genre</p>
+            )}
           </div>
         </div>
       </div>

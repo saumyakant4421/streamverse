@@ -21,7 +21,7 @@ console.log('Imported Navbar:', Navbar);
 const FallbackNavbar = () => <nav style={{ padding: '1rem', background: '#333', color: '#fff' }}>Fallback Navbar</nav>;
 
 // Fallback image
-const FALLBACK_POSTER = `${process.env.PUBLIC_URL}/images/fallback-poster.jpg`;
+const FALLBACK_POSTER = `${import.meta.env.PUBLIC_URL}/images/fallback-poster.jpg`;
 
 const FranchiseTimeline = ({ movies }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -255,7 +255,7 @@ const FranchiseDetail = () => {
     dcu: null,
   };
 
-  const TMDB_API_KEY = process.env.REACT_APP_TMDB_API_KEY || 'YOUR_TMDB_API_KEY';
+  const TMDB_API_KEY = import.meta.env.VITE_TMDB_API_KEY || 'YOUR_TMDB_API_KEY';
   const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
 
   useEffect(() => {

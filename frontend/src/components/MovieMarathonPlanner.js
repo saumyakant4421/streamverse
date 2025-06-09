@@ -20,7 +20,7 @@ const MovieMarathonPlanner = () => {
 
   movieService.interceptors.request.use(
     async (config) => {
-      if (user && user.getIdToken) {
+      if (user && typeof user.getIdToken === 'function') {
         const token = await user.getIdToken(true);
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -30,15 +30,23 @@ const MovieMarathonPlanner = () => {
   );
 
   useEffect(() => {
-    if (user) fetchBucket();
+    if (user) {
+      fetchBucket();
+    } else {
+      setBucket([]);
+      setTotalRuntime(null);
+      setLoading(false);
+      setError(null);
+    }
   }, [user]);
 
   const fetchBucket = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await movieService.get('/bucket');
       setBucket(response.data.movies || []);
-      calculateRuntime();
+      await calculateRuntime();
     } catch (err) {
       setError('Failed to load bucket');
       toast.error('Failed to load bucket');
@@ -54,10 +62,11 @@ const MovieMarathonPlanner = () => {
     }
     try {
       setLoading(true);
+      setError(null);
       const response = await movieService.post('/bucket/add', { movieId: movie.id });
       setBucket(response.data.movies);
       toast.success('Movie added to bucket');
-      calculateRuntime();
+      await calculateRuntime();
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to add movie');
     } finally {
@@ -66,12 +75,17 @@ const MovieMarathonPlanner = () => {
   };
 
   const removeFromBucket = async (movieId) => {
+    if (!user) {
+      toast.error('Please log in to remove movies');
+      return;
+    }
     try {
       setLoading(true);
+      setError(null);
       const response = await movieService.delete(`/bucket/remove/${movieId}`);
       setBucket(response.data.movies);
       toast.success('Movie removed from bucket');
-      calculateRuntime();
+      await calculateRuntime();
     } catch (err) {
       toast.error('Failed to remove movie');
     } finally {
@@ -80,7 +94,10 @@ const MovieMarathonPlanner = () => {
   };
 
   const calculateRuntime = async () => {
-    if (!user) return;
+    if (!user) {
+      setTotalRuntime(null);
+      return;
+    }
     try {
       const response = await movieService.get('/bucket/runtime');
       setTotalRuntime(response.data);
@@ -90,29 +107,37 @@ const MovieMarathonPlanner = () => {
     }
   };
 
-  return (
-    <div className="marathon-planner">
-      <MarathonSearchBar
-        onAddToBucket={addToBucket}
-        bucket={bucket}
-        user={user}
-      />
-      {error && <p className="error">{error}</p>}
-      {loading && <div className="spinner">Loading...</div>}
+  if (!user) {
+    return (
+      <div className="tools-marathon-planner">
+        <MarathonSearchBar onAddToBucket={addToBucket} bucket={bucket} user={user} />
+        <div className="tools-bucket-section">
+          <h2>Your Marathon Bucket (0/30)</h2>
+          <p>Please log in to create a movie marathon.</p>
+        </div>
+      </div>
+    );
+  }
 
-      <div className="bucket-section">
+  return (
+    <div className="tools-marathon-planner">
+      <MarathonSearchBar onAddToBucket={addToBucket} bucket={bucket} user={user} />
+      {error && <p className="tools-error">{error}</p>}
+      {loading && <div className="tools-spinner">Loading...</div>}
+
+      <div className="tools-bucket-section">
         <h2>Your Marathon Bucket ({bucket.length}/30)</h2>
         {bucket.length === 0 ? (
           <p>No movies in your bucket yet.</p>
         ) : (
-          <div className="bucket-list">
+          <div className="tools-bucket-list">
             {bucket.map((movie) => (
-              <div key={movie.id} className="bucket-item">
+              <div key={movie.id} className="tools-bucket-item">
                 <img
                   src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`}
                   alt={movie.title}
                 />
-                <div className="bucket-info">
+                <div className="tools-bucket-info">
                   <h3>{movie.title}</h3>
                   <p>{movie.runtime} min</p>
                   <button onClick={() => removeFromBucket(movie.id)}>
@@ -124,9 +149,11 @@ const MovieMarathonPlanner = () => {
           </div>
         )}
         {totalRuntime && (
-          <div className="runtime-summary">
+          <div className="tools-runtime-summary">
             <h3>Total Runtime</h3>
-            <p>{totalRuntime.formatted} ({totalRuntime.totalMinutes} minutes)</p>
+            <p>
+              {totalRuntime.formatted} ({totalRuntime.totalMinutes} minutes)
+            </p>
             <p>{totalRuntime.movieCount} movies</p>
           </div>
         )}

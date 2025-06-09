@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaSearch } from 'react-icons/fa';
@@ -5,7 +6,7 @@ import { toast } from 'react-hot-toast';
 import '../styles/searchbar.scss';
 
 const MarathonSearchBar = ({
-  apiBaseUrl = 'http://localhost:4004/api/tools/marathon', // Updated to 4004
+  apiBaseUrl = 'http://localhost:4004/api/tools/marathon',
   placeholder = 'Search movies for your marathon...',
   onAddToBucket,
   bucket = [],
@@ -43,13 +44,13 @@ const MarathonSearchBar = ({
     const source = axios.CancelToken.source();
 
     const searchMovies = async () => {
-      console.log('Searching with query:', searchQuery); // Debug log
+      console.log('Searching with query:', searchQuery);
       try {
         const response = await marathonService.get('/search', {
           params: { query: searchQuery },
           cancelToken: source.token,
         });
-        console.log('Search response:', response.data); // Debug log
+        console.log('Search response:', response.data);
         setSearchResults(response.data || []);
       } catch (error) {
         if (axios.isCancel(error)) {
@@ -110,7 +111,7 @@ const MarathonSearchBar = ({
           <p>{movie.release_date ? new Date(movie.release_date).getFullYear() : 'Unknown'}</p>
           <div className="search-result-actions">
             <button
-              className="search-add-btn"
+              className="search-watch-btn" // Changed from search-add-btn to search-watch-btn
               onClick={(e) => {
                 e.stopPropagation();
                 onAddToBucket(movie);

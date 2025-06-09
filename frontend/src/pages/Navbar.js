@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { FaUser, FaRobot, FaHome, FaFilm, FaTools } from "react-icons/fa";
+import { FaUser, FaRobot, FaHome, FaFilm, FaTools, FaMoon, FaSun } from "react-icons/fa";
+import { MdSunny } from "react-icons/md";
+
+import { useAuth } from "../context/AuthContext";
 import "../styles/navbar.scss";
 
 const Navbar = () => {
   const location = useLocation();
+  const { isDarkMode, toggleDarkMode } = useAuth();
   const [isScrolled, setIsScrolled] = useState(false);
 
   // Handle scroll event
@@ -57,9 +61,14 @@ const Navbar = () => {
           <span>Movie AI</span>
         </Link>
       </div>
-      <Link to="/user" className="profile-icon">
-        <FaUser />
-      </Link>
+      <div className="nav-right">
+        <button onClick={toggleDarkMode} className="dark-mode-toggle" type="button">
+          {isDarkMode ? <MdSunny /> : <FaMoon />}
+        </button>
+        <Link to="/user" className="profile-icon">
+          <FaUser />
+        </Link>
+      </div>
     </nav>
   );
 };

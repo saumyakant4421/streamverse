@@ -1,4 +1,3 @@
-
 import { Routes, Route, Navigate } from "react-router-dom";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
@@ -7,10 +6,9 @@ import UserPage from "./pages/Userpage";
 import MoviePage from "./pages/MoviePage";
 import RecommendPage from "./pages/RecommendPage";
 import ToolsPage from "./pages/ToolsPage";
-import FranchiseSearch from './pages/Franchise'; // This is FranchiseSearch.js
-// import PopularFranchise from './pages/PopularFranchise';
+import FranchiseSearch from './pages/Franchise';
 import FranchisePage from './components/FranchisePage';
-import FranchiseDetail from './pages/FranchiseDetail'; // Add this import
+import FranchiseDetail from './pages/FranchiseDetail';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider, useAuth } from "./context/AuthContext";
 
@@ -89,7 +87,7 @@ function App() {
           path="/popularfranchises/:collectionId"
           element={
             <ProtectedRoute>
-              <FranchiseDetail /> {/* Use FranchiseDetail instead of FranchisePage */}
+              <FranchiseDetail />
             </ProtectedRoute>
           }
         />

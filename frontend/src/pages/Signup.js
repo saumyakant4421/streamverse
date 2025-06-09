@@ -9,7 +9,7 @@ import GoogleLogo from "../assets/google-logo.png";
 import signupBgImage from "../assets/signup-bg.jpg";
 import { signInWithGoogle } from "../firebaseConfig";
 
-const API_BASE_URL = process.env.REACT_APP_API_URL;
+const API_BASE_URL = import.meta.env.REACT_APP_API_URL;
 
 const Signup = () => {
   const [email, setEmail] = useState("");
